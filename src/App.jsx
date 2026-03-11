@@ -23,26 +23,25 @@ const DEF_CFG = {
   tagline:      "بوابتك الذهبية للعمل في كبرى المستشفيات السعودية",
 };
 
-// ... (هنا تكمل بقية الـ SEED_VISA و SEED_TRANS و SEED_ADS اللي كانت في كودك) ...
+// ... هنا أضف بقية الـ SEEDs والـ GLOBAL_CSS والـ Utilities اللي في ملفك الأصلي بالظبط ...
 
 /* ════════════════════════════════════════════════════════════════════
-   MAIN APP COMPONENT
+   MAIN COMPONENT
 ════════════════════════════════════════════════════════════════════ */
 const App = () => {
-  // انقل هنا كل الـ Logic (useState, useEffect, functions)
-  // اللي كانت موجودة في ملفك v3.1
+  // هنا حط كل الـ Logic والـ States اللي في الـ App عندك
+  // أنا هسيبلك الهيكل عشان تنسخ جواه براحتك
   
+  // مثال (انقل الـ Logic بتاعك هنا):
+  const [loading, setLoading] = useState(false);
+  // ...
+
   return (
-    <div style={{ background: "var(--dark)", minHeight: "100vh" }}>
-       {/* كل الـ JSX اللي كان موجود في الـ return في كودك */}
-       <header style={{ textAlign: 'center', padding: '2rem' }}>
-          <img src={LOGO_SRC} alt="Logo" style={{ width: '120px' }} />
-          <h1>{DEF_CFG.siteName}</h1>
-       </header>
-       {/* ... بقية الـ Sections ... */}
+    <div style={{ background:"var(--dark)", minHeight:"100vh" }}>
+       {/* حط هنا الـ JSX (الأكواد اللي بتبدأ بـ <div) اللي في ملفك */}
     </div>
   );
 };
 
-// ── السطر السحري اللي كان ناقص ──
+// ── السطر اللي بيصلح الشاشة البيضاء ──
 export default App;
