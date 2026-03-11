@@ -435,5 +435,5 @@ const JobCard = memo(({ job, googleForm, applyBtnText, idx = 0 }) => {
         background:`radial-gradient(ellipse at ${tilt.shine.x}% ${tilt.shine.y}%, rgba(201,162,39,.1), transparent 55%)`,
         transition:"background .1s",
       }}/>
-      {/* Top edge glint */}
-      <div style={{ position:"absolut
+      <div style={{
+        position:"absolute", top:0, left:"20%"
