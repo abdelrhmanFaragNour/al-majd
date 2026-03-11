@@ -118,7 +118,7 @@ export default function App() {
   );
 }
     sort((a,b) => b.date - a.date);
-}
+
 
 function parseCities(table) {
   if (!table?.rows) return DEFAULT_CITIES;
