@@ -785,140 +785,164 @@ const AdminLogin = ({ onOk, onClose }) => {
 };
 
 /* ════════════════════════════════════════════════════════════════════
-   ADMIN PANEL
+   ADMIN PANEL — field components outside to prevent input re-mount
 ════════════════════════════════════════════════════════════════════ */
-const AdminPanel = ({ state, setState, onClose }) => {
-  const [sec,    setSec]    = useState("jobs");
-  const [jobTab, setJobTab] = useState("visa");
-  const [editId, setEditId] = useState(null);
-  const [form,   setForm]   = useState({});
-  const [adEdit, setAdEdit] = useState(null);
-  const [adForm, setAdForm] = useState({});
-  const [cfgF,   setCfgF]   = useState({ ...state.cfg });
-  const [newCity,setNewCity] = useState("");
+const JobField = ({ label, fkey, form, setForm }) => (
+  <div>
+    <label style={{ fontSize:12, color:"var(--text2)", marginBottom:5, display:"block" }}>{label}</label>
+    <input className="field" value={form[fkey] || ""}
+      onChange={e => { const v = e.target.value; setForm(f => ({ ...f, [fkey]: v })); }}
+      style={{ padding:"9px 12px" }} />
+  </div>
+);
 
-  const { visaJobs, transJobs, ads, cfg, cities } = state;
+const AdField = ({ label, fkey, adForm, setAdForm }) => (
+  <div>
+    <label style={{ fontSize:12, color:"var(--text2)", marginBottom:5, display:"block" }}>{label}</label>
+    <input className="field" value={adForm[fkey] || ""}
+      onChange={e => { const v = e.target.value; setAdForm(f => ({ ...f, [fkey]: v })); }}
+      style={{ padding:"9px 12px" }} />
+  </div>
+);
+
+const CfgField = ({ label, fk, cfgF, setCfgF }) => (
+  <div>
+    <label style={{ fontSize:12, color:"var(--text2)", marginBottom:5, display:"block" }}>{label}</label>
+    <input className="field" value={cfgF[fk] || ""}
+      onChange={e => { const v = e.target.value; setCfgF(f => ({ ...f, [fk]: v })); }}
+      style={{ padding:"9px 12px" }} />
+  </div>
+);
+
+const fileToBase64 = (file) => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res(r.result);
+  r.onerror = rej;
+  r.readAsDataURL(file);
+});
+
+const AdminPanel = ({ state, setState, onClose }) => {
+  const [sec,     setSec]     = useState("jobs");
+  const [jobTab,  setJobTab]  = useState("visa");
+  const [editId,  setEditId]  = useState(null);
+  const [form,    setForm]    = useState({});
+  const [adEdit,  setAdEdit]  = useState(null);
+  const [adForm,  setAdForm]  = useState({});
+  const [cfgF,    setCfgF]    = useState({ ...state.cfg });
+  const [newCity, setNewCity] = useState("");
+
+  const { visaJobs, transJobs, ads, cities } = state;
   const jobs    = jobTab === "visa" ? visaJobs : transJobs;
   const setJobs = (v) => setState(s => jobTab==="visa" ? {...s,visaJobs:v} : {...s,transJobs:v});
 
-  // Persist on every change
   useEffect(() => { adminStore.save(state); }, [state]);
 
-  const openJob = (job) => { setEditId(job ? job.id : "NEW"); setForm(job ? {...job} : { title:"", city:"", salary:"", exp:"", urgent:false, show:true, date:new Date().toISOString() }); };
+  const openJob = (job) => {
+    setEditId(job ? job.id : "NEW");
+    setForm(job ? {...job} : { title:"", city:"", salary:"", exp:"", urgent:false, show:true, date:new Date().toISOString() });
+  };
   const saveJob = () => {
     if (!form.title?.trim()) return;
     const j = { ...form, id: editId==="NEW" ? "adm-" + uid() : editId };
     setJobs(editId==="NEW" ? [j, ...jobs] : jobs.map(x => x.id===editId ? j : x));
     setEditId(null);
   };
-  const deleteJob = (id) => { if (!confirm("حذف الوظيفة؟")) return; setJobs(jobs.filter(x=>x.id!==id)); };
+  const deleteJob  = (id) => { if (!confirm("حذف الوظيفة؟")) return; setJobs(jobs.filter(x=>x.id!==id)); };
   const toggleProp = (id, key) => setJobs(jobs.map(x => x.id===id ? {...x,[key]:!x[key]} : x));
 
-  const openAd = (a) => { setAdEdit(a?a.id:"NEW"); setAdForm(a?{...a}:{title:"",img:"",subtitle:"",link:"#",color:"#c9a227"}); };
-  const saveAd = () => {
+  const openAd = (a) => {
+    setAdEdit(a ? a.id : "NEW");
+    setAdForm(a ? {...a} : { title:"", img:"", subtitle:"", link:"#", color:"#c9a227" });
+  };
+  const saveAd   = () => {
     const a = { ...adForm, id: adEdit==="NEW" ? "adm-" + uid() : adEdit };
     setState(s => ({ ...s, ads: adEdit==="NEW" ? [a,...s.ads] : s.ads.map(x=>x.id===adEdit?a:x) }));
     setAdEdit(null);
   };
-  const deleteAd = (id) => { if (confirm("حذف الإعلان؟")) setState(s=>({...s,ads:s.ads.filter(x=>x.id!==id)})); };
-
+  const deleteAd   = (id) => { if (confirm("حذف الإعلان؟")) setState(s=>({...s,ads:s.ads.filter(x=>x.id!==id)})); };
   const addCity    = () => { if (newCity.trim()) { setState(s=>({...s,cities:[...s.cities,newCity.trim()]})); setNewCity(""); } };
   const removeCity = (c) => setState(s=>({...s,cities:s.cities.filter(x=>x!==c)}));
-  const saveCfg    = () => { setState(s=>({...s,cfg:{...s.cfg,...cfgF}})); alert("✅ تم الحفظ"); };
+  const saveCfg    = () => { setState(s=>({...s,cfg:{...s.cfg,...cfgF}})); alert("تم الحفظ"); };
 
-  /* ── Shared input component ── */
-  const F = ({ label, fkey, type="text", placeholder="" }) => (
-    <div>
-      <label style={{ fontSize:12, color:"var(--text2)", marginBottom:5, display:"block" }}>{label}</label>
-      <input type={type} className="field" placeholder={placeholder}
-        value={form[fkey]||""} onChange={e => setForm(f=>({...f,[fkey]:e.target.value}))}
-        style={{ padding:"9px 12px" }} />
-    </div>
-  );
-  const AF = ({ label, fkey, placeholder="" }) => (
-    <div>
-      <label style={{ fontSize:12, color:"var(--text2)", marginBottom:5, display:"block" }}>{label}</label>
-      <input className="field" placeholder={placeholder} value={adForm[fkey]||""}
-        onChange={e => setAdForm(f=>({...f,[fkey]:e.target.value}))} style={{ padding:"9px 12px" }} />
-    </div>
-  );
+  const onAdImg = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const b64 = await fileToBase64(f).catch(()=>null);
+    if (b64) setAdForm(x => ({ ...x, img: b64 }));
+  };
+  const onLogo = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const b64 = await fileToBase64(f).catch(()=>null);
+    if (b64) setCfgF(x => ({ ...x, logoSrc: b64 }));
+  };
 
-  const navItems = [["jobs","💼 الوظائف"],["ads","🖼 الإعلانات"],["cities","🏙 المدن"],["settings","⚙ الإعدادات"]];
+  const nav = [["jobs","💼 الوظائف"],["ads","🖼 الإعلانات"],["cities","🏙 المدن"],["settings","⚙ الإعدادات"]];
 
   return (
     <div style={{ position:"fixed", inset:0, zIndex:2100, display:"flex", background:"rgba(0,0,0,.86)", backdropFilter:"blur(14px)", animation:"fadeIn .25s" }}>
       <div style={{ width:"100%", maxWidth:960, margin:"auto", background:"var(--dark2)", borderRadius:"var(--r2)", border:"1px solid var(--border)", display:"flex", flexDirection:"column", maxHeight:"93vh", overflow:"hidden", boxShadow:"var(--shadow)" }}>
 
-        {/* Header */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 24px", borderBottom:"1px solid var(--border)" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <span style={{ fontSize:20 }}>⚙</span>
-            <span style={{ fontWeight:900, fontSize:17, color:"var(--gold)" }}>لوحة التحكم</span>
-          </div>
-          <div style={{ display:"flex", gap:10, alignItems:"center" }}>
-            <button className="btn btn-ghost" style={{ padding:"7px 14px", fontSize:12 }}
-              onClick={() => { cache.clear(); alert("تم مسح الكاش!"); }}>🗑 مسح الكاش</button>
+          <span style={{ fontWeight:900, fontSize:17, color:"var(--gold)" }}>⚙ لوحة التحكم</span>
+          <div style={{ display:"flex", gap:10 }}>
+            <button className="btn btn-ghost" style={{ padding:"7px 14px", fontSize:12 }} onClick={()=>{cache.clear();alert("تم مسح الكاش!");}}>🗑 مسح الكاش</button>
             <button className="btn btn-danger" style={{ padding:"7px 16px", fontSize:12 }} onClick={onClose}>✕ إغلاق</button>
           </div>
         </div>
 
         <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
-          {/* Sidebar */}
           <div style={{ width:168, flexShrink:0, borderLeft:"1px solid var(--border)", padding:12, display:"flex", flexDirection:"column", gap:4 }}>
-            {navItems.map(([id, label]) => (
+            {nav.map(([id,label]) => (
               <button key={id} className={"admin-nav-item " + (sec===id?"admin-nav-on":"admin-nav-off")} onClick={()=>setSec(id)}>{label}</button>
             ))}
           </div>
 
-          {/* Content */}
           <div style={{ flex:1, overflow:"auto", padding:"22px 26px" }}>
 
-            {/* ── JOBS ── */}
             {sec === "jobs" && (
               <div>
                 <div style={{ display:"flex", gap:8, marginBottom:18, flexWrap:"wrap", alignItems:"center" }}>
                   {["visa","transfer"].map(t => (
                     <button key={t} className={"tab " + (jobTab===t?"tab-on":"tab-off")} style={{ padding:"9px 20px", fontSize:13 }} onClick={()=>setJobTab(t)}>
-                      {t==="visa"?"✈ تأشيرات":"🔄 نقل كفالة"}
+                      {t==="visa" ? "✈ تأشيرات" : "🔄 نقل كفالة"}
                     </button>
                   ))}
                   <button className="btn btn-gold" style={{ marginRight:"auto", padding:"9px 20px", fontSize:13 }} onClick={()=>openJob(null)}>+ وظيفة جديدة</button>
                 </div>
 
-                {/* Edit form */}
                 {editId && (
                   <div style={{ background:"var(--dark3)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:18, marginBottom:16 }}>
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
-                      <F label="المسمى الوظيفي" fkey="title"/>
-                      <F label="المدينة" fkey="city"/>
-                      <F label="الراتب" fkey="salary"/>
-                      <F label="الخبرة المطلوبة" fkey="exp"/>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:12 }}>
+                      <JobField label="المسمى الوظيفي" fkey="title"  form={form} setForm={setForm} />
+                      <JobField label="المدينة"         fkey="city"   form={form} setForm={setForm} />
+                      <JobField label="الراتب"          fkey="salary" form={form} setForm={setForm} />
+                      <JobField label="الخبرة"          fkey="exp"    form={form} setForm={setForm} />
                     </div>
                     <label style={{ display:"flex", gap:10, alignItems:"center", cursor:"pointer", fontSize:13, marginBottom:14, color:"var(--text)" }}>
                       <input type="checkbox" checked={!!form.urgent} onChange={e=>setForm(f=>({...f,urgent:e.target.checked}))} style={{ accentColor:"var(--gold)", width:16, height:16 }}/>
-                      تحديد كعاجل ⚡
+                      عاجل ⚡
                     </label>
                     <div style={{ display:"flex", gap:10 }}>
-                      <button className="btn btn-gold" style={{ padding:"9px 24px", fontSize:13 }} onClick={saveJob}>💾 حفظ</button>
+                      <button className="btn btn-gold"  style={{ padding:"9px 24px", fontSize:13 }} onClick={saveJob}>💾 حفظ</button>
                       <button className="btn btn-ghost" style={{ padding:"9px 18px", fontSize:13 }} onClick={()=>setEditId(null)}>إلغاء</button>
                     </div>
                   </div>
                 )}
 
-                {/* Job list */}
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {jobs.length === 0 && <p style={{ color:"var(--text2)", textAlign:"center", padding:"2rem" }}>لا توجد وظائف في هذه القائمة</p>}
+                  {jobs.length === 0 && <p style={{ color:"var(--text2)", textAlign:"center", padding:"2rem" }}>لا توجد وظائف</p>}
                   {jobs.map(j => (
                     <div key={j.id} className="admin-row" style={{ display:"flex", gap:10, alignItems:"center" }}>
-                      <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ flex:1 }}>
                         <div style={{ fontWeight:700, fontSize:13, color:j.show!==false?"var(--text)":"var(--text2)", textDecoration:j.show!==false?"none":"line-through" }}>{j.title}</div>
                         <div style={{ fontSize:11, color:"var(--text2)" }}>{j.city} · {j.salary}</div>
                       </div>
-                      <div style={{ display:"flex", gap:6, flexWrap:"wrap", justifyContent:"flex-end" }}>
+                      <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
                         {j.urgent && <span style={{ fontSize:10, padding:"2px 8px", borderRadius:20, border:"1px solid #f97316", color:"#f97316" }}>عاجل</span>}
-                        <button className="admin-small-btn" title="تعديل" onClick={()=>openJob(j)}>✏</button>
-                        <button className="admin-small-btn" title={j.urgent?"إزالة عاجل":"تعيين عاجل"} onClick={()=>toggleProp(j.id,"urgent")}>{j.urgent?"🔕":"⚡"}</button>
-                        <button className="admin-small-btn" title={j.show!==false?"إخفاء":"إظهار"} onClick={()=>toggleProp(j.id,"show")}>{j.show!==false?"👁":"🚫"}</button>
+                        <button className="admin-small-btn" onClick={()=>openJob(j)}>✏</button>
+                        <button className="admin-small-btn" onClick={()=>toggleProp(j.id,"urgent")}>{j.urgent?"🔕":"⚡"}</button>
+                        <button className="admin-small-btn" onClick={()=>toggleProp(j.id,"show")}>{j.show!==false?"👁":"🚫"}</button>
                         <button className="btn btn-danger admin-small-btn" onClick={()=>deleteJob(j.id)}>🗑</button>
                       </div>
                     </div>
@@ -927,28 +951,41 @@ const AdminPanel = ({ state, setState, onClose }) => {
               </div>
             )}
 
-            {/* ── ADS ── */}
             {sec === "ads" && (
               <div>
                 <button className="btn btn-gold" style={{ padding:"9px 20px", fontSize:13, marginBottom:18 }} onClick={()=>openAd(null)}>+ إعلان جديد</button>
 
                 {adEdit && (
                   <div style={{ background:"var(--dark3)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:18, marginBottom:16 }}>
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
-                      <AF label="عنوان الإعلان" fkey="title"/>
-                      <AF label="نص فرعي" fkey="subtitle"/>
-                      <AF label="رابط الصورة (URL)" fkey="img"/>
-                      <AF label="رابط الإعلان" fkey="link"/>
-                      <div>
-                        <label style={{ fontSize:12, color:"var(--text2)", marginBottom:5, display:"block" }}>لون الإعلان (Hex)</label>
-                        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                          <input type="color" value={adForm.color||"#c9a227"} onChange={e=>setAdForm(f=>({...f,color:e.target.value}))} style={{ width:46, height:38, borderRadius:8, border:"1px solid var(--border)", background:"none", cursor:"pointer" }}/>
-                          <input className="field" value={adForm.color||""} onChange={e=>setAdForm(f=>({...f,color:e.target.value}))} style={{ padding:"9px 12px", flex:1 }}/>
-                        </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:12 }}>
+                      <AdField label="عنوان الإعلان" fkey="title"    adForm={adForm} setAdForm={setAdForm} />
+                      <AdField label="نص فرعي"        fkey="subtitle" adForm={adForm} setAdForm={setAdForm} />
+                      <AdField label="رابط الإعلان"   fkey="link"     adForm={adForm} setAdForm={setAdForm} />
+                    </div>
+
+                    <div style={{ marginBottom:12 }}>
+                      <label style={{ fontSize:12, color:"var(--text2)", marginBottom:6, display:"block" }}>صورة الإعلان</label>
+                      <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
+                        {adForm.img && <img src={adForm.img} alt="" style={{ height:50, borderRadius:6, border:"1px solid var(--border)", objectFit:"cover" }} />}
+                        <label style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"8px 14px", background:"var(--dark4)", border:"1px solid var(--border)", borderRadius:8, cursor:"pointer", fontSize:12, color:"var(--text)", fontFamily:"Cairo,sans-serif" }}>
+                          📁 رفع صورة
+                          <input type="file" accept="image/*" onChange={onAdImg} style={{ display:"none" }} />
+                        </label>
+                        <span style={{ color:"var(--text2)", fontSize:12 }}>أو URL:</span>
+                        <AdField label="" fkey="img" adForm={adForm} setAdForm={setAdForm} />
                       </div>
                     </div>
+
+                    <div style={{ marginBottom:14 }}>
+                      <label style={{ fontSize:12, color:"var(--text2)", marginBottom:5, display:"block" }}>لون الإعلان</label>
+                      <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                        <input type="color" value={adForm.color||"#c9a227"} onChange={e=>setAdForm(f=>({...f,color:e.target.value}))} style={{ width:44, height:36, borderRadius:6, border:"1px solid var(--border)", background:"none", cursor:"pointer" }}/>
+                        <span style={{ fontSize:13, color:"var(--text)" }}>{adForm.color}</span>
+                      </div>
+                    </div>
+
                     <div style={{ display:"flex", gap:10 }}>
-                      <button className="btn btn-gold" style={{ padding:"9px 24px", fontSize:13 }} onClick={saveAd}>💾 حفظ</button>
+                      <button className="btn btn-gold"  style={{ padding:"9px 24px", fontSize:13 }} onClick={saveAd}>💾 حفظ</button>
                       <button className="btn btn-ghost" style={{ padding:"9px 18px", fontSize:13 }} onClick={()=>setAdEdit(null)}>إلغاء</button>
                     </div>
                   </div>
@@ -957,10 +994,12 @@ const AdminPanel = ({ state, setState, onClose }) => {
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   {ads.map(a => (
                     <div key={a.id} className="admin-row" style={{ display:"flex", gap:12, alignItems:"center" }}>
-                      <div style={{ width:40, height:40, borderRadius:8, background:a.img ? ("url(" + a.img + ") center/cover") : (a.color||"var(--gold)"), flexShrink:0, border:"1px solid var(--border)" }}/>
+                      <div style={{ width:60, height:40, borderRadius:8, flexShrink:0, border:"1px solid var(--border)", overflow:"hidden", background:a.color||"var(--gold)" }}>
+                        {a.img && <img src={a.img} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />}
+                      </div>
                       <div style={{ flex:1 }}>
                         <div style={{ fontWeight:700, fontSize:13 }}>{a.title||"بدون عنوان"}</div>
-                        <div style={{ fontSize:11, color:"var(--text2)" }}>{a.link}</div>
+                        <div style={{ fontSize:11, color:"var(--text2)" }}>{a.subtitle}</div>
                       </div>
                       <div style={{ display:"flex", gap:6 }}>
                         <button className="admin-small-btn" onClick={()=>openAd(a)}>✏</button>
@@ -972,7 +1011,6 @@ const AdminPanel = ({ state, setState, onClose }) => {
               </div>
             )}
 
-            {/* ── CITIES ── */}
             {sec === "cities" && (
               <div>
                 <div style={{ display:"flex", gap:10, marginBottom:20 }}>
@@ -984,32 +1022,38 @@ const AdminPanel = ({ state, setState, onClose }) => {
                 <div style={{ display:"flex", flexWrap:"wrap", gap:10 }}>
                   {cities.map(c => (
                     <div key={c} style={{ display:"flex", alignItems:"center", gap:8, background:"var(--dark3)", border:"1px solid var(--border)", borderRadius:50, padding:"7px 16px", fontSize:13, fontWeight:600 }}>
-                      {c}
-                      <span style={{ cursor:"pointer", color:"#f87171", fontSize:15, lineHeight:1 }} onClick={()=>removeCity(c)}>×</span>
+                      {c}<span style={{ cursor:"pointer", color:"#f87171", fontSize:15 }} onClick={()=>removeCity(c)}>×</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* ── SETTINGS ── */}
             {sec === "settings" && (
               <div>
+                <div style={{ background:"var(--dark3)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:16, marginBottom:20 }}>
+                  <div style={{ fontWeight:700, fontSize:14, marginBottom:12, color:"var(--gold)" }}>🖼 اللوجو</div>
+                  <div style={{ display:"flex", gap:16, alignItems:"center", flexWrap:"wrap" }}>
+                    <img src={cfgF.logoSrc || LOGO_SRC} alt="logo" style={{ height:60, borderRadius:8, border:"1px solid var(--border)", background:"rgba(255,255,255,.1)", padding:4 }} />
+                    <label style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"10px 18px", background:"var(--dark4)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", fontSize:13, color:"var(--text)", fontFamily:"Cairo,sans-serif", fontWeight:700 }}>
+                      📁 رفع لوجو جديد
+                      <input type="file" accept="image/*" onChange={onLogo} style={{ display:"none" }} />
+                    </label>
+                  </div>
+                </div>
+
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20 }}>
                   {[
-                    ["googleForm",   "رابط Google Form للتقديم"],
+                    ["googleForm",   "رابط Google Form"],
                     ["applyBtnText", "نص زر التقديم"],
                     ["siteName",     "اسم الموقع"],
                     ["tagline",      "الشعار الفرعي"],
-                    ["waEgypt",      "رقم واتساب مصر (أرقام فقط)"],
+                    ["waEgypt",      "واتساب مصر (أرقام)"],
                     ["waEgyptNum",   "رقم مصر للعرض"],
-                    ["waSaudi",      "رقم واتساب السعودية (أرقام فقط)"],
+                    ["waSaudi",      "واتساب السعودية (أرقام)"],
                     ["waSaudiNum",   "رقم السعودية للعرض"],
-                  ].map(([k, lbl]) => (
-                    <div key={k}>
-                      <label style={{ fontSize:12, color:"var(--text2)", marginBottom:5, display:"block" }}>{lbl}</label>
-                      <input className="field" value={cfgF[k]||""} onChange={e=>setCfgF(f=>({...f,[k]:e.target.value}))} style={{ padding:"9px 12px" }}/>
-                    </div>
+                  ].map(([k,lbl]) => (
+                    <CfgField key={k} label={lbl} fk={k} cfgF={cfgF} setCfgF={setCfgF} />
                   ))}
                 </div>
                 <button className="btn btn-gold" style={{ padding:"12px 32px", fontSize:14 }} onClick={saveCfg}>💾 حفظ الإعدادات</button>
@@ -1022,6 +1066,7 @@ const AdminPanel = ({ state, setState, onClose }) => {
     </div>
   );
 };
+
 
 /* ════════════════════════════════════════════════════════════════════
    MAIN APP
