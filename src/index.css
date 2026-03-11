@@ -1,4 +1,6 @@
 body {
-  background: #06060a;
   margin: 0;
+  padding: 0;
+  background-color: white; /* أو أي لون تحبه */
+  font-family: sans-serif;
 }
