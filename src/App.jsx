@@ -117,7 +117,7 @@ export default function App() {
     </div>
   );
 }
-    .sort((a,b) => b.date - a.date);
+    sort((a,b) => b.date - a.date);
 }
 
 function parseCities(table) {
