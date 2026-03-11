@@ -22,6 +22,21 @@ const DEF_CFG = {
   waSaudiNum:   "+966 50 000 0000",
   siteName:     "المجد جروب للتوظيف الطبي",
   tagline:      "بوابتك الذهبية للعمل في كبرى المستشفيات السعودية",
+  logoSrc:      "",
+  facebook:     "",
+  instagram:    "",
+  tiktok:       "",
+  youtube:      "",
+  twitter:      "",
+  linkedin:     "",
+  iconVisa:     "✈",
+  iconTransfer: "🔄",
+  iconUrgent:   "⚡",
+  iconApply:    "✦",
+  iconLocation: "📍",
+  iconSalary:   "💰",
+  iconExp:      "⏱",
+  iconDate:     "📅",
 };
 
 const SEED_VISA = [
@@ -393,7 +408,7 @@ const Chip = memo(({ icon, children }) => (
 /* ════════════════════════════════════════════════════════════════════
    3D JOB CARD
 ════════════════════════════════════════════════════════════════════ */
-const JobCard = memo(({ job, googleForm, applyBtnText, idx = 0 }) => {
+const JobCard = memo(({ job, googleForm, applyBtnText, idx = 0, cfg = {} }) => {
   const ref   = useRef(null);
   const frame = useRef(null);
   const [tilt, setTilt] = useState({ x:0, y:0, shine:{ x:50, y:50 } });
@@ -443,26 +458,26 @@ const JobCard = memo(({ job, googleForm, applyBtnText, idx = 0 }) => {
       }}/>
 
       {job.urgent && (
-        <span className="badge-urgent" style={{ position:"absolute", top:14, left:14 }}>⚡ عاجل</span>
+        <span className="badge-urgent" style={{ position:"absolute", top:14, left:14 }}>{cfg.iconUrgent||"⚡"} عاجل</span>
       )}
 
       <h3 style={{ color:"var(--gold2)", fontSize:"1.06rem", fontWeight:800, lineHeight:1.4, marginBottom:6, paddingTop: job.urgent ? 26 : 0 }}>
         {job.title}
       </h3>
       <div style={{ display:"flex", alignItems:"center", gap:6, color:"var(--text2)", fontSize:13, marginBottom:14 }}>
-        <span style={{ color:"var(--gold)", opacity:.65, fontSize:12 }}>📍</span>{job.city}
+        <span style={{ color:"var(--gold)", opacity:.65, fontSize:12 }}>{cfg.iconLocation||"📍"}</span>{job.city}
       </div>
       <div style={{ display:"flex", gap:8, marginBottom:18, flexWrap:"wrap" }}>
-        {job.salary && <Chip icon="💰">{job.salary}</Chip>}
-        {job.exp    && <Chip icon="⏱">{job.exp}</Chip>}
-        {job.date   && <Chip icon="📅">{dateFmt(job.date)}</Chip>}
+        {job.salary && <Chip icon={cfg.iconSalary||"💰"}>{job.salary}</Chip>}
+        {job.exp    && <Chip icon={cfg.iconExp||"⏱"}>{job.exp}</Chip>}
+        {job.date   && <Chip icon={cfg.iconDate||"📅"}>{dateFmt(job.date)}</Chip>}
       </div>
       <a
         href={googleForm} target="_blank" rel="noopener noreferrer"
         className="btn btn-gold"
         style={{ width:"100%", padding:"12px 0", fontSize:13.5, borderRadius:12, textDecoration:"none" }}
       >
-        {applyBtnText} ✦
+        {applyBtnText} {cfg.iconApply||"✦"}
       </a>
     </div>
   );
@@ -579,6 +594,15 @@ const AdSlider = memo(({ ads }) => {
   );
 });
 
+/* ── Social button style helper ── */
+const socialBtn = (color) => ({
+  display:"inline-flex", alignItems:"center", justifyContent:"center",
+  width:40, height:40, borderRadius:"50%",
+  background:"rgba(255,255,255,.06)", border:"1px solid rgba(255,255,255,.12)",
+  color, fontSize:17, textDecoration:"none", fontWeight:900,
+  transition:"all .2s", lineHeight:1,
+});
+
 /* ════════════════════════════════════════════════════════════════════
    PARALLAX HEADER  — mouse-tracking 3D logo
 ════════════════════════════════════════════════════════════════════ */
@@ -618,7 +642,7 @@ const Header = memo(({ cfg, error }) => {
         filter:"drop-shadow(0 0 " + (14 + Math.abs(mouse.x) * .6) + "px rgba(201,162,39,.55))",
         animation:"float 5.5s ease-in-out infinite",
       }}>
-        <img src={LOGO_SRC} alt={cfg.siteName} loading="eager" decoding="async"
+        <img src={cfg.logoSrc || LOGO_SRC} alt={cfg.siteName} loading="eager" decoding="async"
           style={{ height:94, display:"block" }} />
       </div>
 
@@ -645,6 +669,18 @@ const Header = memo(({ cfg, error }) => {
       {error && (
         <div role="alert" style={{ display:"inline-flex", alignItems:"center", gap:8, marginTop:14, padding:"6px 16px", background:"rgba(248,113,113,.1)", border:"1px solid rgba(248,113,113,.25)", borderRadius:50, color:"#f87171", fontSize:12, fontWeight:600 }}>
           ⚠ {error}
+        </div>
+      )}
+
+      {/* Social media links */}
+      {(cfg.facebook || cfg.instagram || cfg.tiktok || cfg.youtube || cfg.twitter || cfg.linkedin) && (
+        <div style={{ display:"flex", gap:14, justifyContent:"center", marginTop:20, flexWrap:"wrap" }}>
+          {cfg.facebook  && <a href={cfg.facebook}  target="_blank" rel="noopener noreferrer" style={{ color:"#1877f2", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F170;</a>}
+          {cfg.instagram && <a href={cfg.instagram} target="_blank" rel="noopener noreferrer" style={{ color:"#e1306c", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F4F8;</a>}
+          {cfg.tiktok    && <a href={cfg.tiktok}    target="_blank" rel="noopener noreferrer" style={{ color:"#fff",    fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F3B5;</a>}
+          {cfg.youtube   && <a href={cfg.youtube}   target="_blank" rel="noopener noreferrer" style={{ color:"#ff0000", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x25B6;</a>}
+          {cfg.twitter   && <a href={cfg.twitter}   target="_blank" rel="noopener noreferrer" style={{ color:"#1da1f2", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1D54F;</a>}
+          {cfg.linkedin  && <a href={cfg.linkedin}  target="_blank" rel="noopener noreferrer" style={{ color:"#0a66c2", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F4BC;</a>}
         </div>
       )}
     </header>
@@ -905,7 +941,7 @@ const AdminPanel = ({ state, setState, onClose }) => {
                 <div style={{ display:"flex", gap:8, marginBottom:18, flexWrap:"wrap", alignItems:"center" }}>
                   {["visa","transfer"].map(t => (
                     <button key={t} className={"tab " + (jobTab===t?"tab-on":"tab-off")} style={{ padding:"9px 20px", fontSize:13 }} onClick={()=>setJobTab(t)}>
-                      {t==="visa" ? "✈ تأشيرات" : "🔄 نقل كفالة"}
+                      {t==="visa" ? {(S&&S.cfg?S.cfg.iconVisa:"✈") + " تأشيرات"} : "🔄 نقل كفالة"}
                     </button>
                   ))}
                   <button className="btn btn-gold" style={{ marginRight:"auto", padding:"9px 20px", fontSize:13 }} onClick={()=>openJob(null)}>+ وظيفة جديدة</button>
@@ -1031,32 +1067,86 @@ const AdminPanel = ({ state, setState, onClose }) => {
 
             {sec === "settings" && (
               <div>
-                <div style={{ background:"var(--dark3)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:16, marginBottom:20 }}>
-                  <div style={{ fontWeight:700, fontSize:14, marginBottom:12, color:"var(--gold)" }}>🖼 اللوجو</div>
-                  <div style={{ display:"flex", gap:16, alignItems:"center", flexWrap:"wrap" }}>
-                    <img src={cfgF.logoSrc || LOGO_SRC} alt="logo" style={{ height:60, borderRadius:8, border:"1px solid var(--border)", background:"rgba(255,255,255,.1)", padding:4 }} />
-                    <label style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"10px 18px", background:"var(--dark4)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", fontSize:13, color:"var(--text)", fontFamily:"Cairo,sans-serif", fontWeight:700 }}>
-                      📁 رفع لوجو جديد
-                      <input type="file" accept="image/*" onChange={onLogo} style={{ display:"none" }} />
-                    </label>
+                <div style={{ background:"var(--dark3)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:18, marginBottom:16 }}>
+                  <div style={{ fontWeight:800, fontSize:14, color:"var(--gold)", marginBottom:14 }}>🖼 الشعار والأيقونة</div>
+                  <div style={{ display:"flex", gap:28, flexWrap:"wrap" }}>
+                    <div>
+                      <div style={{ fontSize:12, color:"var(--text2)", marginBottom:8 }}>اللوجو الرئيسي</div>
+                      <div style={{ display:"flex", gap:12, alignItems:"center" }}>
+                        <div style={{ width:64, height:64, borderRadius:10, border:"1px solid var(--border)", background:"rgba(255,255,255,.06)", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>
+                          <img src={cfgF.logoSrc || LOGO_SRC} alt="logo" style={{ maxWidth:58, maxHeight:58, objectFit:"contain" }} />
+                        </div>
+                        <label style={{ display:"inline-flex", alignItems:"center", gap:7, padding:"9px 15px", background:"rgba(255,255,255,.04)", border:"1px solid var(--border)", borderRadius:9, cursor:"pointer", fontSize:12, color:"var(--text)", fontFamily:"Cairo,sans-serif" }}>
+                          📁 رفع لوجو
+                          <input type="file" accept="image/*" onChange={async e => {
+                            const f=e.target.files?.[0]; if(!f) return;
+                            const b=await fileToBase64(f).catch(()=>null);
+                            if(b) setCfgF(x=>({...x,logoSrc:b}));
+                          }} style={{ display:"none" }} />
+                        </label>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize:12, color:"var(--text2)", marginBottom:8 }}>الأيقونة (Favicon)</div>
+                      <div style={{ display:"flex", gap:12, alignItems:"center" }}>
+                        <div style={{ width:48, height:48, borderRadius:8, border:"1px solid var(--border)", background:"rgba(255,255,255,.06)", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>
+                          {cfgF.faviconSrc ? <img src={cfgF.faviconSrc} alt="" style={{ width:36, height:36, objectFit:"contain" }} /> : <span style={{ fontSize:22 }}>🏥</span>}
+                        </div>
+                        <div>
+                          <label style={{ display:"inline-flex", alignItems:"center", gap:7, padding:"9px 15px", background:"rgba(255,255,255,.04)", border:"1px solid var(--border)", borderRadius:9, cursor:"pointer", fontSize:12, color:"var(--text)", fontFamily:"Cairo,sans-serif" }}>
+                            📁 رفع أيقونة
+                            <input type="file" accept="image/*" onChange={async e => {
+                              const f=e.target.files?.[0]; if(!f) return;
+                              const b=await fileToBase64(f).catch(()=>null);
+                              if(b) {
+                                setCfgF(x=>({...x,faviconSrc:b}));
+                                let lnk=document.querySelector("link[rel~='icon']");
+                                if(!lnk){lnk=document.createElement("link");lnk.rel="icon";document.head.appendChild(lnk);}
+                                lnk.href=b;
+                              }
+                            }} style={{ display:"none" }} />
+                          </label>
+                          <p style={{ fontSize:10, color:"var(--text2)", marginTop:4 }}>أيقونة تاب المتصفح</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20 }}>
-                  {[
-                    ["googleForm",   "رابط Google Form"],
-                    ["applyBtnText", "نص زر التقديم"],
-                    ["siteName",     "اسم الموقع"],
-                    ["tagline",      "الشعار الفرعي"],
-                    ["waEgypt",      "واتساب مصر (أرقام)"],
-                    ["waEgyptNum",   "رقم مصر للعرض"],
-                    ["waSaudi",      "واتساب السعودية (أرقام)"],
-                    ["waSaudiNum",   "رقم السعودية للعرض"],
-                  ].map(([k,lbl]) => (
-                    <CfgField key={k} label={lbl} fk={k} cfgF={cfgF} setCfgF={setCfgF} />
-                  ))}
+                <div style={{ background:"var(--dark3)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:18, marginBottom:16 }}>
+                  <div style={{ fontWeight:800, fontSize:14, color:"var(--gold)", marginBottom:14 }}>📱 السوشيال ميديا</div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+                    {[
+                      ["facebook",  "🔵 Facebook"],
+                      ["instagram", "📷 Instagram"],
+                      ["tiktok",    "TikTok"],
+                      ["youtube",   "YouTube"],
+                      ["telegram",  "Telegram"],
+                    ].map(([k,lbl]) => (
+                      <CfgField key={k} label={lbl} fk={k} cfgF={cfgF} setCfgF={setCfgF} />
+                    ))}
+                  </div>
                 </div>
-                <button className="btn btn-gold" style={{ padding:"12px 32px", fontSize:14 }} onClick={saveCfg}>💾 حفظ الإعدادات</button>
+
+                <div style={{ background:"var(--dark3)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:18, marginBottom:18 }}>
+                  <div style={{ fontWeight:800, fontSize:14, color:"var(--gold)", marginBottom:14 }}>⚙ الإعدادات العامة</div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                    {[
+                      ["googleForm",   "رابط Google Form"],
+                      ["applyBtnText", "نص زر التقديم"],
+                      ["siteName",     "اسم الموقع"],
+                      ["tagline",      "الشعار الفرعي"],
+                      ["waEgypt",      "واتساب مصر (أرقام فقط)"],
+                      ["waEgyptNum",   "رقم مصر للعرض"],
+                      ["waSaudi",      "واتساب السعودية (أرقام فقط)"],
+                      ["waSaudiNum",   "رقم السعودية للعرض"],
+                    ].map(([k,lbl]) => (
+                      <CfgField key={k} label={lbl} fk={k} cfgF={cfgF} setCfgF={setCfgF} />
+                    ))}
+                  </div>
+                </div>
+
+                <button className="btn btn-gold" style={{ padding:"12px 32px", fontSize:14 }} onClick={saveCfg}>💾 حفظ كل الإعدادات</button>
               </div>
             )}
 
@@ -1240,7 +1330,7 @@ export default function App() {
           ) : visible.length > 0 ? (
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))", gap:24 }}>
               {visible.map((j, i) => (
-                <JobCard key={j.id} job={j} googleForm={S.cfg.googleForm} applyBtnText={S.cfg.applyBtnText} idx={i} />
+                <JobCard key={j.id} job={j} googleForm={S.cfg.googleForm} applyBtnText={S.cfg.applyBtnText} idx={i} cfg={S.cfg} />
               ))}
             </div>
           ) : (
