@@ -23,25 +23,34 @@ const DEF_CFG = {
   tagline:      "بوابتك الذهبية للعمل في كبرى المستشفيات السعودية",
 };
 
-// ... هنا أضف بقية الـ SEEDs والـ GLOBAL_CSS والـ Utilities اللي في ملفك الأصلي بالظبط ...
+// ... (بقية كود الـ SEEDs والـ GLOBAL_CSS والـ Utilities تظل كما هي في ملفك الأصلي) ...
 
 /* ════════════════════════════════════════════════════════════════════
-   MAIN COMPONENT
+   MAIN APP COMPONENT
 ════════════════════════════════════════════════════════════════════ */
 const App = () => {
-  // هنا حط كل الـ Logic والـ States اللي في الـ App عندك
-  // أنا هسيبلك الهيكل عشان تنسخ جواه براحتك
-  
-  // مثال (انقل الـ Logic بتاعك هنا):
-  const [loading, setLoading] = useState(false);
+  // هنا تضع كل الـ Logic (useState, useEffect, functions) الخاصة بك
   // ...
+  
+  // مثال بسيط للتوضيح:
+  const [adminLogin, setAdminLogin] = useState(false);
 
   return (
-    <div style={{ background:"var(--dark)", minHeight:"100vh" }}>
-       {/* حط هنا الـ JSX (الأكواد اللي بتبدأ بـ <div) اللي في ملفك */}
+    <div style={{ background: "var(--dark)", minHeight: "100vh" }}>
+      {/* هنا تضع كل كود الـ JSX الخاص بواجهة الموقع */}
+      <h1 style={{ color: "var(--gold)", textAlign: "center", paddingTop: "50px" }}>
+        {DEF_CFG.siteName}
+      </h1>
+      
+      {/* ── Admin gear btn ── */}
+      <button onClick={() => setAdminLogin(true)} style={{ position: "fixed", top: 16, left: 16 }}>
+        ⚙
+      </button>
+
+      {/* ... بقية العناصر التي صممتها ... */}
     </div>
   );
 };
 
-// ── السطر اللي بيصلح الشاشة البيضاء ──
+// ── السطر السحري اللي بيصلح الشاشة البيضاء ويشغل الموقع ──
 export default App;
