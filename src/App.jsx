@@ -29,6 +29,7 @@ const DEF_CFG = {
   youtube:      "",
   twitter:      "",
   linkedin:     "",
+  snapchat:    "",
   iconVisa:     "✈",
   iconTransfer: "🔄",
   iconUrgent:   "⚡",
@@ -673,13 +674,14 @@ const Header = memo(({ cfg, error }) => {
       )}
 
       {/* Social media links */}
-      {(cfg.facebook || cfg.instagram || cfg.tiktok || cfg.youtube || cfg.twitter || cfg.linkedin) && (
+      {(cfg.facebook || cfg.instagram || cfg.tiktok || cfg.youtube || cfg.twitter || cfg.linkedin || cfg.snapchat) && (
         <div style={{ display:"flex", gap:14, justifyContent:"center", marginTop:20, flexWrap:"wrap" }}>
           {cfg.facebook  && <a href={cfg.facebook}  target="_blank" rel="noopener noreferrer" style={{ color:"#1877f2", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F170;</a>}
           {cfg.instagram && <a href={cfg.instagram} target="_blank" rel="noopener noreferrer" style={{ color:"#e1306c", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F4F8;</a>}
           {cfg.tiktok    && <a href={cfg.tiktok}    target="_blank" rel="noopener noreferrer" style={{ color:"#fff",    fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F3B5;</a>}
           {cfg.youtube   && <a href={cfg.youtube}   target="_blank" rel="noopener noreferrer" style={{ color:"#ff0000", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x25B6;</a>}
           {cfg.twitter   && <a href={cfg.twitter}   target="_blank" rel="noopener noreferrer" style={{ color:"#1da1f2", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1D54F;</a>}
+          {cfg.snapchat  && <a href={cfg.snapchat}  target="_blank" rel="noopener noreferrer" style={{ color:"#fffc00", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>👻</a>}
           {cfg.linkedin  && <a href={cfg.linkedin}  target="_blank" rel="noopener noreferrer" style={{ color:"#0a66c2", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F4BC;</a>}
         </div>
       )}
@@ -941,7 +943,7 @@ const AdminPanel = ({ state, setState, onClose }) => {
                 <div style={{ display:"flex", gap:8, marginBottom:18, flexWrap:"wrap", alignItems:"center" }}>
                   {["visa","transfer"].map(t => (
                     <button key={t} className={"tab " + (jobTab===t?"tab-on":"tab-off")} style={{ padding:"9px 20px", fontSize:13 }} onClick={()=>setJobTab(t)}>
-                      {t==="visa" ? {(S&&S.cfg?S.cfg.iconVisa:"✈") + " تأشيرات"} : "🔄 نقل كفالة"}
+                      {t==="visa" ? "✈ تأشيرات" : "🔄 نقل كفالة"}
                     </button>
                   ))}
                   <button className="btn btn-gold" style={{ marginRight:"auto", padding:"9px 20px", fontSize:13 }} onClick={()=>openJob(null)}>+ وظيفة جديدة</button>
@@ -1121,7 +1123,9 @@ const AdminPanel = ({ state, setState, onClose }) => {
                       ["instagram", "📷 Instagram"],
                       ["tiktok",    "TikTok"],
                       ["youtube",   "YouTube"],
-                      ["telegram",  "Telegram"],
+                      ["snapchat",  "👻 Snapchat"],
+                      ["twitter",   "🐦 X (Twitter)"],
+                      ["linkedin",  "🔷 LinkedIn"],
                     ].map(([k,lbl]) => (
                       <CfgField key={k} label={lbl} fk={k} cfgF={cfgF} setCfgF={setCfgF} />
                     ))}
@@ -1142,6 +1146,33 @@ const AdminPanel = ({ state, setState, onClose }) => {
                       ["waSaudiNum",   "رقم السعودية للعرض"],
                     ].map(([k,lbl]) => (
                       <CfgField key={k} label={lbl} fk={k} cfgF={cfgF} setCfgF={setCfgF} />
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ background:"var(--dark3)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:18, marginBottom:18 }}>
+                  <div style={{ fontWeight:800, fontSize:14, color:"var(--gold)", marginBottom:6 }}>🎨 تخصيص الأيقونات</div>
+                  <p style={{ fontSize:11, color:"var(--text2)", marginBottom:14 }}>ضع أي emoji أو رمز تريده</p>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                    {[
+                      ["iconVisa",     "أيقونة تبويب تأشيرات"],
+                      ["iconTransfer", "أيقونة تبويب نقل كفالة"],
+                      ["iconUrgent",   "أيقونة عاجل"],
+                      ["iconApply",    "أيقونة زر التقديم"],
+                      ["iconLocation", "أيقونة الموقع"],
+                      ["iconSalary",   "أيقونة الراتب"],
+                      ["iconExp",      "أيقونة الخبرة"],
+                      ["iconDate",     "أيقونة التاريخ"],
+                    ].map(([k, lbl]) => (
+                      <div key={k}>
+                        <label style={{ fontSize:12, color:"var(--text2)", marginBottom:6, display:"block" }}>{lbl}</label>
+                        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                          <span style={{ fontSize:24, minWidth:34, textAlign:"center", background:"var(--dark4)", borderRadius:8, padding:"4px 6px" }}>{cfgF[k] || "—"}</span>
+                          <input className="field" value={cfgF[k] || ""}
+                            onChange={e => { const v = e.target.value; setCfgF(f => ({...f, [k]: v})); }}
+                            style={{ padding:"9px 12px", flex:1 }} />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
