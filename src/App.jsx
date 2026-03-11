@@ -425,15 +425,14 @@ const JobCard = memo(({ job, googleForm, applyBtnText, idx = 0 }) => {
         padding:"1.6rem",
         position:"relative",
         overflow:"hidden",
-        transform:`perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-        animation:`cardIn .5s var(--ease2) ${idx * 0.07}s both`,
+        transform:"perspective(800px) rotateX(" + tilt.x + "deg) rotateY(" + tilt.y + "deg)",
+        animation:"cardIn .5s var(--ease2) " + (idx * 0.07) + "s both",
       }}
     >
-      {/* Dynamic shine layer */}
       <div style={{
         position:"absolute", inset:0, borderRadius:"var(--r2)", pointerEvents:"none",
-        background:`radial-gradient(ellipse at ${tilt.shine.x}% ${tilt.shine.y}%, rgba(201,162,39,.1), transparent 55%)`,
+        background:"radial-gradient(ellipse at " + tilt.shine.x + "% " + tilt.shine.y + "%, rgba(201,162,39,.1), transparent 55%)",
         transition:"background .1s",
       }}/>
       <div style={{
-        position:"absolute", top:0, left:"20%"
+        position:"absolute", top:0, left:"20%", right
