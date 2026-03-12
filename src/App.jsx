@@ -16,10 +16,10 @@ const ADMIN_PASS = "majd2026";
 const DEF_CFG = {
   googleForm:   "https://forms.gle/AdC1x8tzz5HSJzJz5",
   applyBtnText: "تقدم الآن",
-  waEgypt:      "201100070815",
-  waEgyptNum:   "+20 1100070815",
-  waSaudi:      "966 53 749 1902",
-  waSaudiNum:   "+966 53 749 1902",
+  waEgypt:      "201000000000",
+  waEgyptNum:   "+20 100 000 0000",
+  waSaudi:      "966500000000",
+  waSaudiNum:   "+966 50 000 0000",
   siteName:     "المجد جروب للتوظيف الطبي",
   tagline:      "بوابتك الذهبية للعمل في كبرى المستشفيات السعودية",
   logoSrc:      "",
@@ -38,6 +38,11 @@ const DEF_CFG = {
   iconSalary:   "💰",
   iconExp:      "⏱",
   iconDate:     "📅",
+  heroTitle:    "ابدأ مسيرتك الطبية في أرقى المستشفيات السعودية",
+  heroDesc:     "نربطك بأفضل الفرص الطبية عبر المملكة — تأشيرات ونقل كفالة باجراءات احترافية وسريعة",
+  stat1Num:     "+500",  stat1Text: "وظيفة متاحة",
+  stat2Num:     "+8",    stat2Text: "مدن سعودية",
+  stat3Num:     "+1000", stat3Text: "موظف تم توظيفه",
 };
 
 const SEED_VISA = [
@@ -373,13 +378,24 @@ const parseJobs = (t) => {
 const parseAds = (t) => {
   if (!t?.rows) return [];
   return t.rows.map((r, i) => ({
-    id:       "ad" + i,
-    img:      String(r.c?.[0]?.v ?? "").trim(),
-    title:    String(r.c?.[1]?.v ?? "").trim(),
-    subtitle: String(r.c?.[2]?.v ?? "").trim(),
-    link:     String(r.c?.[3]?.v ?? "#").trim(),
-    color:    String(r.c?.[4]?.v ?? "#c9a227").trim(),
+    id:          "ad" + i,
+    img:         String(r.c?.[0]?.v ?? "").trim(),
+    title:       String(r.c?.[1]?.v ?? "").trim(),
+    subtitle:    String(r.c?.[2]?.v ?? "").trim(),
+    link:        String(r.c?.[3]?.v ?? "#").trim(),
+    color:       String(r.c?.[4]?.v ?? "#c9a227").trim(),
+    imgPosition: String(r.c?.[5]?.v ?? "center").trim() || "center",
   })).filter(a => a.title || a.img);
+};
+
+const parseSocial = (t) => {
+  if (!t?.rows) return [];
+  return t.rows.map(r => ({
+    platform:  String(r.c?.[0]?.v ?? "").trim().toLowerCase(),
+    url:       String(r.c?.[1]?.v ?? "").trim(),
+    icon:      String(r.c?.[2]?.v ?? "").trim(),
+    iconHover: String(r.c?.[3]?.v ?? "").trim(),
+  })).filter(s => s.platform && s.url);
 };
 
 /* ════════════════════════════════════════════════════════════════════
@@ -542,7 +558,7 @@ const AdSlider = memo(({ ads }) => {
               minHeight:230, display:"flex", alignItems:"center", justifyContent:"center",
               padding:"2.5rem 5.5rem",
               background: ad.img
-                ? "linear-gradient(rgba(6,6,10,.5),rgba(6,6,10,.5)),url(" + ad.img + ") center/cover"
+                ? "linear-gradient(rgba(6,6,10,.5),rgba(6,6,10,.5)),url(" + ad.img + ") " + (ad.imgPosition||"center") + "/cover"
                 : "radial-gradient(ellipse at 25% 60%, rgba(" + hexRgb(acol) + ",.2) 0%, transparent 65%), radial-gradient(ellipse at 80% 30%, rgba(" + hexRgb(acol) + ",.08) 0%, transparent 50%), var(--dark2)",
             }}
           >
@@ -607,7 +623,7 @@ const socialBtn = (color) => ({
 /* ════════════════════════════════════════════════════════════════════
    PARALLAX HEADER  — mouse-tracking 3D logo
 ════════════════════════════════════════════════════════════════════ */
-const Header = memo(({ cfg, error }) => {
+const Header = memo(({ cfg, social = {}, error }) => {
   const [mouse, setMouse] = useState({ x:0, y:0 });
   const ref = useRef(null);
   const raf = useRef(null);
@@ -657,14 +673,14 @@ const Header = memo(({ cfg, error }) => {
         transform:"perspective(500px) rotateY(" + (mouse.x*.1) + "deg) translateX(" + (mouse.x*.04) + "px)",
         transition:"transform .18s ease-out",
       }}>
-        {cfg.siteName}
+        {cfg.heroTitle || cfg.siteName}
       </h1>
 
       <p style={{
         color:"var(--text2)", fontSize:15, letterSpacing:".3px",
         transform:"translateX(" + (mouse.x*.06) + "px)", transition:"transform .22s ease-out",
       }}>
-        {cfg.tagline}
+        {cfg.heroDesc || cfg.tagline}
       </p>
 
       {error && (
@@ -674,15 +690,47 @@ const Header = memo(({ cfg, error }) => {
       )}
 
       {/* Social media links */}
-      {(cfg.facebook || cfg.instagram || cfg.tiktok || cfg.youtube || cfg.twitter || cfg.linkedin || cfg.snapchat) && (
-        <div style={{ display:"flex", gap:14, justifyContent:"center", marginTop:20, flexWrap:"wrap" }}>
-          {cfg.facebook  && <a href={cfg.facebook}  target="_blank" rel="noopener noreferrer" style={{ color:"#1877f2", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F170;</a>}
-          {cfg.instagram && <a href={cfg.instagram} target="_blank" rel="noopener noreferrer" style={{ color:"#e1306c", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F4F8;</a>}
-          {cfg.tiktok    && <a href={cfg.tiktok}    target="_blank" rel="noopener noreferrer" style={{ color:"#fff",    fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F3B5;</a>}
-          {cfg.youtube   && <a href={cfg.youtube}   target="_blank" rel="noopener noreferrer" style={{ color:"#ff0000", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x25B6;</a>}
-          {cfg.twitter   && <a href={cfg.twitter}   target="_blank" rel="noopener noreferrer" style={{ color:"#1da1f2", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1D54F;</a>}
-          {cfg.snapchat  && <a href={cfg.snapchat}  target="_blank" rel="noopener noreferrer" style={{ color:"#fffc00", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>👻</a>}
-          {cfg.linkedin  && <a href={cfg.linkedin}  target="_blank" rel="noopener noreferrer" style={{ color:"#0a66c2", fontSize:26, textDecoration:"none", transition:"transform .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>&#x1F4BC;</a>}
+      {social.length > 0 && (
+        <div style={{ display:"flex", gap:16, justifyContent:"center", marginTop:22, flexWrap:"wrap", alignItems:"center" }}>
+          {social.map((s, i) => {
+            const isImg      = s.icon      && (s.icon.startsWith("http")      || s.icon.startsWith("data:"));
+            const isHoverImg = s.iconHover && (s.iconHover.startsWith("http") || s.iconHover.startsWith("data:"));
+            return (
+              <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+                style={{ textDecoration:"none", display:"inline-flex", alignItems:"center", justifyContent:"center" }}
+                onMouseEnter={e => {
+                  const img = e.currentTarget.querySelector(".si-img");
+                  const txt = e.currentTarget.querySelector(".si-txt");
+                  if (img) {
+                    if (isHoverImg) img.src = s.iconHover;
+                    img.style.transform = "scale(1.35) rotate(-8deg)";
+                    img.style.filter    = "drop-shadow(0 0 10px rgba(201,162,39,.7))";
+                  }
+                  if (txt) { txt.style.transform="scale(1.35) rotate(-8deg)"; txt.style.filter="drop-shadow(0 0 10px rgba(201,162,39,.7))"; }
+                }}
+                onMouseLeave={e => {
+                  const img = e.currentTarget.querySelector(".si-img");
+                  const txt = e.currentTarget.querySelector(".si-txt");
+                  if (img) {
+                    if (isHoverImg) img.src = s.icon;
+                    img.style.transform = "scale(1) rotate(0deg)";
+                    img.style.filter    = "none";
+                  }
+                  if (txt) { txt.style.transform="scale(1) rotate(0deg)"; txt.style.filter="none"; }
+                }}>
+                {isImg
+                  ? <img className="si-img" src={s.icon} alt={s.platform}
+                      style={{ width:38, height:38, objectFit:"contain", borderRadius:8, display:"block",
+                        transition:"transform .25s cubic-bezier(.34,1.56,.64,1), filter .25s" }} />
+                  : <span className="si-txt"
+                      style={{ fontSize:32, lineHeight:1, display:"inline-block",
+                        transition:"transform .25s cubic-bezier(.34,1.56,.64,1), filter .25s" }}>
+                      {s.icon || "🔗"}
+                    </span>
+                }
+              </a>
+            );
+          })}
         </div>
       )}
     </header>
@@ -702,7 +750,10 @@ const StatsBar = memo(({ visa, trans }) => {
     ["🔄", trans.length,               "نقل كفالة"],
     ["⚡", urgent,                     "وظيفة عاجلة"],
     ["🏙", cities,                     "مدينة"],
-  ];
+    ...(cfg.stat1Num ? [[cfg.iconApply||"✦", cfg.stat1Num, cfg.stat1Text||""]] : []),
+    ...(cfg.stat2Num ? [["🏙", cfg.stat2Num, cfg.stat2Text||""]] : []),
+    ...(cfg.stat3Num ? [["🏆", cfg.stat3Num, cfg.stat3Text||""]] : []),
+  ].filter((s,i,a) => i < 5 || (i >= 5));
   return (
     <div style={{ display:"flex", justifyContent:"center", gap:10, flexWrap:"wrap", margin:"0 auto 52px", padding:"0 24px", maxWidth:900 }}>
       {stats.map(([icon, val, label]) => (
@@ -1278,6 +1329,7 @@ export default function App() {
     ads:       SEED_ADS,
     cfg:       DEF_CFG,
     cities:    ["الرياض","جدة","مكة","المدينة","الدمام","أبها","تبوك"],
+    social:    [],
   });
 
   /* ── UI state ──────────────────────────────────────────── */
@@ -1311,10 +1363,11 @@ export default function App() {
   /* ── Fetch from Google Sheets ──────────────────────────── */
   useEffect(() => {
     const applySheets = ({ stT, vjT, tjT, adT }) => {
-      const newCfg  = stT ? parseSettings(stT) : DEF_CFG;
-      const vj      = vjT ? parseJobs(vjT)     : [];
-      const tj      = tjT ? parseJobs(tjT)     : [];
-      const newAds  = adT ? parseAds(adT)      : [];
+      const newCfg    = stT ? parseSettings(stT) : DEF_CFG;
+      const vj        = vjT ? parseJobs(vjT)     : [];
+      const tj        = tjT ? parseJobs(tjT)     : [];
+      const newAds    = adT ? parseAds(adT)      : [];
+      const newSocial = soT ? parseSocial(soT)   : {};
       const citiesRaw = [...new Set([...vj,...tj].map(j=>j.city).filter(Boolean))];
 
       setS(prev => ({
@@ -1324,6 +1377,7 @@ export default function App() {
         transJobs: tj.length  ? tj      : prev.transJobs,
         ads:       newAds.length ? newAds : prev.ads,
         cities:    citiesRaw.length ? citiesRaw : prev.cities,
+        social:    newSocial.length ? newSocial : prev.social,
       }));
     };
 
@@ -1394,7 +1448,7 @@ export default function App() {
         <title>{S.cfg.siteName}</title>
 
         {/* ── HEADER ── */}
-        <Header cfg={S.cfg} error={error} />
+        <Header cfg={S.cfg} social={S.social} error={error} />
 
         {/* ── URGENT TICKER ── */}
         <JobsTicker jobs={[...S.visaJobs, ...S.transJobs]} />
@@ -1460,9 +1514,60 @@ export default function App() {
           )}
         </div>
 
+        {/* ── INSTITUTIONAL SECTION ── */}
+        <section style={{ maxWidth:900, margin:"0 auto 0", padding:"0 24px 80px" }}>
+          <div style={{
+            background:"linear-gradient(135deg,rgba(201,162,39,.07) 0%,rgba(201,162,39,.03) 100%)",
+            border:"1px solid rgba(201,162,39,.2)",
+            borderRadius:"var(--r2)",
+            padding:"40px 36px",
+            textAlign:"center",
+            position:"relative",
+            overflow:"hidden",
+          }}>
+            {/* Decorative corner */}
+            <div style={{ position:"absolute", top:-40, left:-40, width:120, height:120, borderRadius:"50%", background:"radial-gradient(circle,rgba(201,162,39,.12),transparent)", pointerEvents:"none" }} />
+            <div style={{ position:"absolute", bottom:-40, right:-40, width:120, height:120, borderRadius:"50%", background:"radial-gradient(circle,rgba(201,162,39,.08),transparent)", pointerEvents:"none" }} />
+
+            {/* Badge */}
+            <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(201,162,39,.12)", border:"1px solid rgba(201,162,39,.3)", borderRadius:50, padding:"5px 18px", fontSize:12, fontWeight:700, color:"var(--gold)", marginBottom:20, letterSpacing:.5 }}>
+              🏥 للمؤسسات والمجموعات الطبية
+            </div>
+
+            <h2 style={{ fontSize:"clamp(1.1rem,2.5vw,1.6rem)", fontWeight:900, color:"#fff", marginBottom:14, lineHeight:1.4 }}>
+              هل تبحث عن كوادر طبية مؤهلة لمنشأتك؟
+            </h2>
+
+            <p style={{ color:"var(--text2)", fontSize:14, lineHeight:1.8, maxWidth:580, margin:"0 auto 28px" }}>
+              نوفر للمستشفيات والمراكز الطبية والمجموعات الصحية كوادر طبية وتمريضية مدربة وجاهزة للعمل — أطباء، ممرضون، أخصائيون، وفنيون بكل التخصصات.
+              تواصل معنا وسنتولى كل خطوات التوظيف والاستقدام.
+            </p>
+
+            {/* Email button */}
+            <a href="mailto:elmagd008@gmail.com"
+              style={{
+                display:"inline-flex", alignItems:"center", gap:10,
+                padding:"13px 32px",
+                background:"linear-gradient(135deg,var(--gold),var(--gold2))",
+                color:"#080604", borderRadius:50, fontWeight:900, fontSize:15,
+                textDecoration:"none", fontFamily:"Cairo,sans-serif",
+                boxShadow:"0 4px 24px rgba(201,162,39,.3)",
+                transition:"transform .2s, box-shadow .2s",
+              }}
+              onMouseEnter={e=>{ e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 8px 32px rgba(201,162,39,.45)"; }}
+              onMouseLeave={e=>{ e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="0 4px 24px rgba(201,162,39,.3)"; }}>
+              ✉ تواصل معنا
+            </a>
+
+            <p style={{ marginTop:14, fontSize:12, color:"var(--text2)", opacity:.7 }}>
+              elmagd008@gmail.com
+            </p>
+          </div>
+        </section>
+
         {/* ── FOOTER ── */}
         <footer onClick={onFooterClick}
-          style={{ textAlign:"center", marginTop:90, padding:"28px 24px", borderTop:"1px solid rgba(255,255,255,.04)", color:"var(--text2)", fontSize:12, cursor:"default", userSelect:"none" }}>
+          style={{ textAlign:"center", marginTop:0, padding:"28px 24px", borderTop:"1px solid rgba(255,255,255,.04)", color:"var(--text2)", fontSize:12, cursor:"default", userSelect:"none" }}>
           <div style={{ fontSize:24, marginBottom:8, opacity:.5 }}>⚕</div>
           <p>© 2026 Al-Majd Medical Group — جميع الحقوق محفوظة</p>
           <p style={{ marginTop:6, opacity:.3, fontSize:10 }}>اضغط على الأيقونة أعلاه ثلاث مرات لفتح لوحة التحكم</p>
