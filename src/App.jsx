@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import Papa from "papaparse";
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import Categories from "./components/Categories";
+import Jobs from "./components/Jobs";
+import Contact from "./components/Contact";
+import Footer from "./components/Footer";
 import "./App.css";
 
-// ملاحظة: لو عندك ملفات الـ Components في مجلد اسمه components تأكد من وجودها
-// إذا كانت ملفاتك في نفس المجلد، امسح كلمة /components من السطور اللي تحت
-
+// رابط جوجل شيت الخاص بك
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS--X_f_k-M3eA8D98D-D988D8ACD9881/pub?output=csv";
 
 function App() {
@@ -14,9 +18,14 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // التعديل الوحيد هنا لضمان تحديث البيانات فوراً
         const response = await fetch(`${SHEET_URL}&t=${new Date().getTime()}`);
-        const csvText = await response.text();
-        Papa.parse(csvText, {
+        const reader = response.body.getReader();
+        const result = await reader.read();
+        const decoder = new TextDecoder("utf-8");
+        const csv = decoder.decode(result.value);
+        
+        Papa.parse(csv, {
           header: true,
           skipEmptyLines: true,
           complete: (results) => {
@@ -24,46 +33,44 @@ function App() {
             setLoading(false);
           },
         });
-      } catch (err) {
-        console.error("Error:", err);
+      } catch (error) {
+        console.error("Error fetching data:", error);
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
-  if (loading) return <div style={{textAlign:'center', padding:'50px'}}>جاري التحميل...</div>;
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <p>جاري تحميل البيانات...</p>
+      </div>
+    );
+  }
 
+  // توزيع البيانات على المكونات الأصلية لموقعك
   const siteContent = data[0] || {};
 
   return (
-    <div className="App" style={{direction: 'rtl'}}>
-      {/* هنا استبدلنا المكونات المعطلة بأكواد بسيطة مباشرة عشان الموقع يشتغل فوراً */}
-      <header style={{padding: '20px', background: '#333', color: '#fff', textAlign: 'center'}}>
-        <h1>{siteContent.brandName || "المجد جروب"}</h1>
-      </header>
-
-      <section style={{padding: '50px', textAlign: 'center', background: '#f4f4f4'}}>
-        <h2>{siteContent.heroTitle || "أهلاً بكم"}</h2>
-        <p>{siteContent.heroSubtitle}</p>
-        {siteContent.heroImage && <img src={siteContent.heroImage} alt="Hero" style={{maxWidth: '100%', borderRadius: '10px'}} />}
-      </section>
-
-      <section style={{padding: '20px'}}>
-        <h3 style={{textAlign: 'center'}}>الوظائف المتاحة</h3>
-        <div style={{display: 'grid', gap: '10px'}}>
-          {data.map((item, index) => (
-            <div key={index} style={{border: '1px solid #ddd', padding: '15px', borderRadius: '5px'}}>
-              <h4>{item.jobTitle}</h4>
-              <p>{item.category}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <footer style={{padding: '20px', textAlign: 'center', background: '#333', color: '#fff'}}>
-        <p>للتواصل: {siteContent.contactPhone}</p>
-      </footer>
+    <div className="App">
+      <Navbar logo={siteContent.logoUrl} brandName={siteContent.brandName} />
+      <main>
+        <Hero 
+          title={siteContent.heroTitle} 
+          subtitle={siteContent.heroSubtitle} 
+          image={siteContent.heroImage} 
+        />
+        <Categories data={data} />
+        <Jobs data={data} />
+        <Contact 
+          phone={siteContent.contactPhone} 
+          email={siteContent.contactEmail} 
+          location={siteContent.location}
+        />
+      </main>
+      <Footer brandName={siteContent.brandName} />
     </div>
   );
 }
