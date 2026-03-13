@@ -740,7 +740,7 @@ const Header = memo(({ cfg, social = {}, error }) => {
 /* ════════════════════════════════════════════════════════════════════
    STATS BAR
 ════════════════════════════════════════════════════════════════════ */
-const StatsBar = memo(({ visa, trans }) => {
+const StatsBar = memo(({ visa, trans, cfg }) => { cfg = cfg || {};
   const all    = [...visa, ...trans];
   const urgent = all.filter(j => j.urgent).length;
   const cities = new Set(all.map(j => j.city).filter(Boolean)).size;
@@ -750,10 +750,7 @@ const StatsBar = memo(({ visa, trans }) => {
     ["🔄", trans.length,               "نقل كفالة"],
     ["⚡", urgent,                     "وظيفة عاجلة"],
     ["🏙", cities,                     "مدينة"],
-    ...(cfg.stat1Num ? [[cfg.iconApply||"✦", cfg.stat1Num, cfg.stat1Text||""]] : []),
-    ...(cfg.stat2Num ? [["🏙", cfg.stat2Num, cfg.stat2Text||""]] : []),
-    ...(cfg.stat3Num ? [["🏆", cfg.stat3Num, cfg.stat3Text||""]] : []),
-  ].filter((s,i,a) => i < 5 || (i >= 5));
+  ];
   return (
     <div style={{ display:"flex", justifyContent:"center", gap:10, flexWrap:"wrap", margin:"0 auto 52px", padding:"0 24px", maxWidth:900 }}>
       {stats.map(([icon, val, label]) => (
@@ -1457,7 +1454,7 @@ export default function App() {
         <AdSlider ads={S.ads} />
 
         {/* ── STATS ── */}
-        <StatsBar visa={S.visaJobs} trans={S.transJobs} />
+        <StatsBar visa={S.visaJobs} trans={S.transJobs} cfg={S.cfg} />
 
         {/* ── TABS ── */}
         <div style={{ display:"flex", justifyContent:"center", gap:12, marginBottom:32, padding:"0 24px" }}>
