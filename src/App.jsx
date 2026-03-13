@@ -339,8 +339,8 @@ const adminStore = {
    GOOGLE SHEETS  (#6 res.ok check)
 ════════════════════════════════════════════════════════════════════ */
 async function fetchSheet(name) {
-  const url = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:json&sheet=" + encodeURIComponent(name);
-  const res = await fetch(url);
+  const url = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:json&sheet=" + encodeURIComponent(name) + "&t=" + Date.now();
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error("HTTP " + res.status + " — sheet: " + name);
   const txt = await res.text();
   const s = txt.indexOf("("), e = txt.lastIndexOf(")");
