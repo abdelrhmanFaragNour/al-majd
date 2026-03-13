@@ -1359,7 +1359,7 @@ export default function App() {
 
   /* ── Fetch from Google Sheets ──────────────────────────── */
   useEffect(() => {
-    const applySheets = ({ stT, vjT, tjT, adT }) => {
+    const applySheets = ({ stT, vjT, tjT, adT, soT }) => {
       const newCfg    = stT ? parseSettings(stT) : DEF_CFG;
       const vj        = vjT ? parseJobs(vjT)     : [];
       const tj        = tjT ? parseJobs(tjT)     : [];
@@ -1382,17 +1382,19 @@ export default function App() {
       const hit = cache.load();
       if (hit) { applySheets(hit); setLoading(false); return; }
       try {
-        const [stT, vjT, tjT, adT] = await Promise.allSettled([
+        const [stT, vjT, tjT, adT, soT] = await Promise.allSettled([
           fetchSheet("settings"),
           fetchSheet("visa"),
           fetchSheet("transfer"),
           fetchSheet("ads"),
+          fetchSheet("social"),
         ]);
         const raw = {
           stT: stT.status==="fulfilled" ? stT.value : null,
           vjT: vjT.status==="fulfilled" ? vjT.value : null,
           tjT: tjT.status==="fulfilled" ? tjT.value : null,
           adT: adT.status==="fulfilled" ? adT.value : null,
+          soT: soT.status==="fulfilled" ? soT.value : null,
         };
         cache.save(raw);
         applySheets(raw);
