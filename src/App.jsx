@@ -1,11 +1,11 @@
-// v3.3 — Google Sheets fix ✓
+// v3.4 — Google Sheets fix with Logo from A1
 import React from "react";
 import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 
 /* ════════════════════════════════════════════════════════════════════
    CONSTANTS & SEEDS
 ════════════════════════════════════════════════════════════════════ */
-const LOGO_SRC = "data:image/webp;base64,UklGRjoaAABXRUJQVlA4IC4aAACwWgCdASrIAMgAPlEkjkUjoiEUum14OAUEpu9H/08NH5P1/3LjiK2p77TyZ9gfVHmV9A/nv20/6H1L+YpzqPMH+xP7Qe79/qP3A91X9T9QD+o/5/rTfQc/aj03/3d+Gv+4f9X9xvbW1Z2ULxq/J+EP4/8+/kPy/9eLJX14/2/oP/Kfu7+p/vP7q+0Hgv8i9RH8q/pX+r/Mf0U9xLbH0CO/v+3/wHjp/1XpF9hP+h7gX6u/637gPam8NHzr2Af6D/Xf91943x3f9v+T/0PqD+j//B/m/gP/nf9h/5X+A9rb//+3b9tP//7qv7Hf/Y4/nqspyO8h+GSR7/ETpLdmcl+c43Q8yB88LzQ4PiUlRNxaVMlIkLo7wQb0RmGmgF5RdbZ8N4H1/2F5PD9O4qquy+1/ToqIyg8iN11x0qLO0AYgDgxq0U6oBHqn9+NMagwuHAzurldVNfG+JjoWagyIOiPlcsDItXN6dDlHlvVrih4jBjVTf1QdbT7DjHZ7+FtAvZ2NDQAuJYO65dyr0enToKuAKDR0YVljCxpzumMTSZR552PVpXbGP2bbY75x64bsGSHdo/PaleCGqWfZJgpqe4wLL3asUDRmXh52JICkghYfxg9iczcihhP1Drn/bhNF0jeZAe++STpAMG7APqs/Zv2gZZ/9wHDfLxIocgU+eb+NkjfIJfXtlvMio9/A43lna5d7NtST4nQ2mXVY0PlPtvxB8txm6gpnhQN9R8wmoY/AU/25rm/xAfyWLZ7E3FH4mxi4Uflw2a+D1OSSPnSiijnPR5H1QoeZKVrOchokcj0phfudf5hoIfM2+4NEJfY0+f74TJSt1l/lnPZBNeTx3vk4k7esDfo5cxBoLB4PA8VbC3EfzonfBWDlfKptY1O3FL7RAVOacU3R5YUb2+h7qYm61e1nylS8oLzhuU2BL4+TxsPdXV0mPA+U5JU0h3kPwySbkLyX56rKcjvIfhkkQAD+/gbQAAw9v6MGQchhd4O9cAx1hwPql17Ef/EsVVnBPWzm4FKwHECj/oZ+OeWX85asrengcWerw3j4gFp9wM+Z9hb7HdsOnt5aemCEFxAK7wfhqzGUXh5pp4185nXos/5/oIgoGpJngAsm77Mq9e3LdHYSXiwUxUE8ZQt3b7rgfOllic97Fl96t42o6XLIRW/DOqbpBjSIhbsEds6iQVLnjXhd5KiqM8nsZqTSwWvCGA69vd9xvAGsuEgoCLqLklxVmQWH9emcgzwLoj83KNfo6T4jg/LIOjj1UX5kZKHrTPnz+HWGDHgQABTnloAH17IqLZBwC650XNNCl3Q3SU/KUHOwoXdVJBbyl0MiGBFUT3hmjwVjVruiZCcYvMH3x97Jaoe8A9J0G6O30CHGrZCZljRPNMWQQoqcYB7Q50bU4mdtPVcbkbZuWgpZiowl9P8ev6dPLz8vStKsynCwnLswxEhGCJsKsE7QT1kcV2Po5Up0ocA3nVqXiUlMEf87vNLBJtVAbzGgHzN7vpmMdLrHUPVjR7H4A5cU36VvXfjJsreAziqZlZf1ZUMZcyQH6D/vj+FSLi3ncJe1PM02CGgcrXNN0g8J1dmTL/NsOsU2lRe4wkf9oZ448gVfco0eATAIlRGkg4IA==";
+const LOGO_SRC = "https://iili.io/q1AdYlt.png"; // الرابط المباشر الجديد
 
 const SHEET_ID   = "1nwJh2Cz-KP--SvvQmeipHate8GMfdreM";
 const CACHE_KEY  = "majd_v3";
@@ -22,7 +22,7 @@ const DEF_CFG = {
   waSaudiNum:   "+966 50 000 0000",
   siteName:     "المجد جروب للتوظيف الطبي",
   tagline:      "بوابتك الذهبية للعمل في كبرى المستشفيات السعودية",
-  logoSrc:      "",
+  logoSrc:      LOGO_SRC,
   facebook:     "",
   instagram:    "",
   tiktok:       "",
@@ -334,7 +334,7 @@ const hexLighten = (h, amt=40) => {
 };
 
 /* ════════════════════════════════════════════════════════════════════
-   CACHE & ADMIN STORE  (#11)
+   CACHE & ADMIN STORE
 ════════════════════════════════════════════════════════════════════ */
 const cache = {
   save: (d) => { 
@@ -355,6 +355,7 @@ const cache = {
   clear: () => { 
     try { 
       localStorage.removeItem(CACHE_KEY); 
+      console.log("🗑 تم مسح الكاش");
     } catch {} 
   },
 };
@@ -374,7 +375,7 @@ const adminStore = {
 };
 
 /* ════════════════════════════════════════════════════════════════════
-   GOOGLE SHEETS  (#6 res.ok check)
+   GOOGLE SHEETS
 ════════════════════════════════════════════════════════════════════ */
 
 function parseCSV(text) {
@@ -387,10 +388,6 @@ function parseCSV(text) {
   const lines = text.trim().split("\n");
   if (lines.length === 0) return [];
   
-  // تحقق من وجود رؤوس
-  const headers = lines[0].split(',').map(h => h.trim());
-  console.log("📋 رؤوس CSV:", headers);
-  
   lines.forEach((line, idx) => {
     if (!line.trim()) return;
     
@@ -402,24 +399,25 @@ function parseCSV(text) {
         inQ = !inQ; 
       }
       else if (ch === "," && !inQ) { 
-        cols.push(cur.trim()); 
+        cols.push(cur); 
         cur = ""; 
       }
       else { 
         cur += ch; 
       }
     }
-    cols.push(cur.trim());
+    cols.push(cur);
     
-    // تأكد من أن عدد الأعمدة مناسب
-    if (cols.length >= headers.length) {
-      rows.push(cols);
-    } else {
-      console.warn(`⚠️ صف ${idx + 1} غير مكتمل:`, cols);
-    }
+    rows.push(cols);
   });
   
   console.log(`✅ تم تحليل ${rows.length} صف من CSV`);
+  if (rows.length > 0) {
+    console.log("📋 أول صف (العناوين):", rows[0]);
+    if (rows.length > 1) {
+      console.log("📋 ثاني صف (أول بيانات):", rows[1]);
+    }
+  }
   return rows;
 }
 
@@ -452,7 +450,7 @@ async function fetchSheet(name) {
     return parseCSV(text);
   } catch (e) {
     console.error(`❌ فشل جلب ${name}:`, e);
-    throw e;
+    return []; // Return empty array instead of throwing
   }
 }
 
@@ -463,13 +461,20 @@ const parseSettings = (rows) => {
     return cfg;
   }
   
-  rows.slice(1).forEach((r, idx) => {
+  // ✅ قراءة اللوجو من A1 (الصف الأول بعد العناوين، العمود الأول)
+  if (rows[1] && rows[1][0]) {
+    cfg.logoSrc = rows[1][0].trim();
+    console.log("🖼 تم تحميل اللوجو من A1:", cfg.logoSrc);
+  }
+  
+  // قراءة باقي الإعدادات (من الصف 2 وما بعده)
+  rows.slice(2).forEach((r, idx) => {
     if (!Array.isArray(r) || r.length < 2) return;
     const k = (r[0] || "").trim();
     const v = (r[1] || "").trim();
     if (k && v) {
       cfg[k] = v;
-      console.log(`⚙ إعداد: ${k} = ${v.substring(0, 30)}${v.length > 30 ? '...' : ''}`);
+      console.log(`⚙ إعداد: ${k} = ${v}`);
     }
   });
   
@@ -482,41 +487,30 @@ const parseJobs = (rows) => {
     return [];
   }
   
-  console.log("📋 صفوف الوظائف الخام:", rows.slice(0, 3));
+  console.log(`📋 معالجة ${rows.length-1} صف من الوظائف`);
   
   const jobs = rows.slice(1).map((r, i) => {
-    if (!Array.isArray(r)) {
-      console.warn(`⚠️ صف ${i + 2} غير صحيح:`, r);
-      return null;
-    }
+    if (!Array.isArray(r)) return null;
     
     const job = {
       id:     "sh" + i + "-" + uid(),
-      title:  String(r[0] || "").trim(),
-      city:   String(r[1] || "").trim(),
-      salary: String(r[2] || "").trim(),
-      exp:    String(r[3] || "").trim(),
+      title:  r[0] ? String(r[0]).trim() : "",
+      city:   r[1] ? String(r[1]).trim() : "",
+      salary: r[2] ? String(r[2]).trim() : "",
+      exp:    r[3] ? String(r[3]).trim() : "",
       urgent: parseUrgent(r[4]),
       date:   r[5] || null,
-      show:   parseShow(r[6]),
+      show:   r[6] ? parseShow(r[6]) : true,
     };
     
-    if (!job.title) {
-      console.log(`⚠️ صف ${i + 2} بدون عنوان:`, r);
-      return null;
-    }
-    
+    if (!job.title) return null;
     return job;
   })
-  .filter(j => j && j.show);
+  .filter(j => j !== null)
+  .filter(j => j.show);
   
-  console.log(`✅ تم تحليل ${jobs.length} وظيفة من أصل ${rows.length - 1} صف`);
-  
-  return jobs.sort((a, b) => {
-    const da = a.date ? new Date(a.date).getTime() : 0;
-    const db = b.date ? new Date(b.date).getTime() : 0;
-    return (isNaN(db)?0:db) - (isNaN(da)?0:da);
-  });
+  console.log(`✅ تم تحليل ${jobs.length} وظيفة`);
+  return jobs;
 };
 
 const parseAds = (rows) => {
@@ -528,16 +522,19 @@ const parseAds = (rows) => {
   const ads = rows.slice(1).map((r, i) => {
     if (!Array.isArray(r)) return null;
     
-    return {
+    const ad = {
       id:          "ad" + i + "-" + uid(),
-      img:         String(r[0] || "").trim(),
-      title:       String(r[1] || "").trim(),
-      subtitle:    String(r[2] || "").trim(),
-      link:        String(r[3] || "#").trim(),
-      color:       String(r[4] || "#c9a227").trim(),
-      imgPosition: String(r[5] || "center").trim() || "center",
+      img:         r[0] ? String(r[0]).trim() : "",
+      title:       r[1] ? String(r[1]).trim() : "",
+      subtitle:    r[2] ? String(r[2]).trim() : "",
+      link:        r[3] ? String(r[3]).trim() : "#",
+      color:       r[4] ? String(r[4]).trim() : "#c9a227",
+      imgPosition: r[5] ? String(r[5]).trim() : "center",
     };
-  }).filter(a => a && (a.title || a.img));
+    
+    if (!ad.title && !ad.img) return null;
+    return ad;
+  }).filter(a => a !== null);
   
   console.log(`✅ تم تحليل ${ads.length} إعلان`);
   return ads;
@@ -675,7 +672,6 @@ const AdSlider = memo(({ ads }) => {
   const [anim,   setAnim]   = useState(false);
   const [paused, setPaused] = useState(false);
   const timer = useRef(null);
-  const progressRef = useRef(null);
 
   const go = useCallback((next, d = 1) => {
     setAnim(false);
@@ -752,12 +748,6 @@ const AdSlider = memo(({ ads }) => {
           <button className="sl-arrow" aria-label="التالي"  onClick={() => go((cur + 1) % ads.length, 1)}
             style={{ position:"absolute", top:"50%", left:16,  transform:"translateY(-50%)" }}>›</button>
         </>}
-
-        <div style={{ position:"absolute", bottom:0, left:0, right:0, height:2.5, background:"rgba(255,255,255,.08)" }}>
-          {!paused && (
-            <div ref={progressRef} key={cur + "-" + paused} style={{ height:"100%", background:"linear-gradient(90deg," + acol + "," + hexLighten(acol) + ")", animation:"ticker 5s linear forwards", width:"100%", transformOrigin:"left" }} />
-          )}
-        </div>
       </div>
 
       {ads.length > 1 && (
@@ -853,6 +843,27 @@ const Header = memo(({ cfg, social = [], error, onRetry }) => {
           )}
         </div>
       )}
+
+      <div style={{ marginTop: 20 }}>
+        <button 
+          onClick={onRetry}
+          style={{
+            background:"rgba(201,162,39,.1)",
+            border:"1px solid var(--border)",
+            borderRadius:50,
+            padding:"8px 20px",
+            color:"var(--gold)",
+            fontSize:13,
+            fontWeight:600,
+            cursor:"pointer",
+            display:"inline-flex",
+            alignItems:"center",
+            gap:8
+          }}
+        >
+          🔄 تحديث البيانات من جوجل شيت
+        </button>
+      </div>
 
       {social.length > 0 && (
         <div style={{ display:"flex", gap:16, justifyContent:"center", marginTop:22, flexWrap:"wrap", alignItems:"center" }}>
@@ -1112,7 +1123,7 @@ const AdminPanel = ({ state, setState, onClose }) => {
   const deleteAd   = (id) => { if (confirm("حذف الإعلان؟")) setState(s=>({...s,ads:s.ads.filter(x=>x.id!==id)})); };
   const addCity    = () => { if (newCity.trim()) { setState(s=>({...s,cities:[...s.cities,newCity.trim()]})); setNewCity(""); } };
   const removeCity = (c) => setState(s=>({...s,cities:s.cities.filter(x=>x!==c)}));
-  const saveCfg    = () => { setState(s=>({...s,cfg:{...s.cfg,...cfgF}})); alert("تم الحفظ"); };
+  const saveCfg    = () => { setState(s=>({...s,cfg:{...s.cfg,...cfgF}})); console.log("💾 تم حفظ الإعدادات، اللوجو:", cfgF.logoSrc); alert("تم الحفظ"); };
 
   const onAdImg = async (e) => {
     const f = e.target.files?.[0];
@@ -1474,8 +1485,10 @@ export default function App() {
     if (saved) setS(saved);
   }, []);
 
-  const fetchAllSheets = async () => {
-    setLoading(true);
+  const fetchAllSheets = async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+    }
     setError(null);
     
     try {
@@ -1491,6 +1504,9 @@ export default function App() {
       try {
         settingsRows = await fetchSheet("settings");
         console.log("✅ تم تحميل settings:", settingsRows.length, "صف");
+        if (settingsRows.length > 0) {
+          console.log("📋 عينة settings:", settingsRows.slice(0, 3));
+        }
       } catch (e) {
         console.warn("⚠️ فشل تحميل settings:", e);
       }
@@ -1498,6 +1514,9 @@ export default function App() {
       try {
         visaRows = await fetchSheet("visa");
         console.log("✅ تم تحميل visa:", visaRows.length, "صف");
+        if (visaRows.length > 0) {
+          console.log("📋 عينة visa:", visaRows.slice(0, 3));
+        }
       } catch (e) {
         console.warn("⚠️ فشل تحميل visa:", e);
       }
@@ -1505,6 +1524,9 @@ export default function App() {
       try {
         transferRows = await fetchSheet("transfer");
         console.log("✅ تم تحميل transfer:", transferRows.length, "صف");
+        if (transferRows.length > 0) {
+          console.log("📋 عينة transfer:", transferRows.slice(0, 3));
+        }
       } catch (e) {
         console.warn("⚠️ فشل تحميل transfer:", e);
       }
@@ -1512,6 +1534,9 @@ export default function App() {
       try {
         adsRows = await fetchSheet("ads");
         console.log("✅ تم تحميل ads:", adsRows.length, "صف");
+        if (adsRows.length > 0) {
+          console.log("📋 عينة ads:", adsRows.slice(0, 3));
+        }
       } catch (e) {
         console.warn("⚠️ فشل تحميل ads:", e);
       }
@@ -1519,8 +1544,22 @@ export default function App() {
       try {
         socialRows = await fetchSheet("social");
         console.log("✅ تم تحميل social:", socialRows.length, "صف");
+        if (socialRows.length > 0) {
+          console.log("📋 عينة social:", socialRows.slice(0, 3));
+        }
       } catch (e) {
         console.warn("⚠️ فشل تحميل social:", e);
+      }
+      
+      // إذا ما فيش أي بيانات جديدة، ارجع
+      if (!settingsRows.length && !visaRows.length && !transferRows.length && !adsRows.length && !socialRows.length) {
+        if (!silent) {
+          setError("لم يتم تحميل أي بيانات من جوجل شيت - يتم عرض البيانات الافتراضية");
+        }
+        if (!silent) {
+          setLoading(false);
+        }
+        return;
       }
       
       // معالجة البيانات
@@ -1560,15 +1599,19 @@ export default function App() {
       };
       cache.save(cacheData);
       
-      if (!settingsRows.length && !visaRows.length && !transferRows.length && !adsRows.length && !socialRows.length) {
-        setError("لم يتم تحميل أي بيانات من جوجل شيت - يتم عرض البيانات الافتراضية");
+      if (!silent) {
+        console.log("✅ تم تحديث البيانات بنجاح");
       }
       
     } catch (e) {
       console.error("🔥 خطأ في تحميل البيانات:", e);
-      setError("حدث خطأ في الاتصال بجوجل شيت - يتم عرض البيانات الافتراضية");
+      if (!silent) {
+        setError("حدث خطأ في الاتصال بجوجل شيت - يتم عرض البيانات الافتراضية");
+      }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
@@ -1596,14 +1639,24 @@ export default function App() {
         }));
         
         setLoading(false);
+        
+        // حتى لو فيه كاش، حاول تجيب بيانات جديدة في الخلفية
+        console.log("🔄 جلب بيانات جديدة في الخلفية...");
+        fetchAllSheets(true); // true يعني تحديث في الخلفية
+        
       } else {
-        await fetchAllSheets();
+        await fetchAllSheets(false);
       }
     };
     
     loadFromCache();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleManualRefresh = () => {
+    cache.clear(); // امسح الكاش أولاً
+    fetchAllSheets(false); // ثم حمل من جديد
+  };
 
   const allJobs = tab === "visa" ? S.visaJobs : S.transJobs;
   const filtered = useMemo(() => {
@@ -1637,7 +1690,7 @@ export default function App() {
 
         <title>{S.cfg.siteName}</title>
 
-        <Header cfg={S.cfg} social={S.social} error={error} onRetry={fetchAllSheets} />
+        <Header cfg={S.cfg} social={S.social} error={error} onRetry={handleManualRefresh} />
 
         <JobsTicker jobs={[...S.visaJobs, ...S.transJobs]} />
 
