@@ -1,4 +1,4 @@
-// v3.2 — react import fix ✓
+// v3.3 — Google Sheets fix ✓
 import React from "react";
 import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 
@@ -62,6 +62,17 @@ const SEED_ADS = [
   { id:"ad2", img:"", title:"نقل كفالة فوري",                       subtitle:"تواصل معنا الآن وابدأ إجراءاتك", link:"#", color:"#3b82f6" },
   { id:"ad3", img:"", title:"مميزات حصرية لأعضاء المجد جروب",      subtitle:"متابعة مستمرة حتى الوصول", link:"#", color:"#8b5cf6" },
 ];
+
+/* ════════════════════════════════════════════════════════════════════
+   GOOGLE SHEETS URLS - ضع روابط النشر الصحيحة هنا
+════════════════════════════════════════════════════════════════════ */
+const CSV_URLS = {
+  settings: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=1276002029&single=true&output=csv",
+  visa:     "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=513051489&single=true&output=csv",
+  transfer: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=532437154&single=true&output=csv",
+  ads:      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=13072504&single=true&output=csv",
+  social:   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=906944007&single=true&output=csv",
+};
 
 /* ════════════════════════════════════════════════════════════════════
    GLOBAL CSS
@@ -326,78 +337,182 @@ const hexLighten = (h, amt=40) => {
    CACHE & ADMIN STORE  (#11)
 ════════════════════════════════════════════════════════════════════ */
 const cache = {
-  save: (d) => { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts:Date.now(), d })); } catch {} },
-  load: () => { try { const r=JSON.parse(localStorage.getItem(CACHE_KEY)||"null"); return r&&Date.now()-r.ts<CACHE_TTL?r.d:null; } catch { return null; } },
-  clear: () => { try { localStorage.removeItem(CACHE_KEY); } catch {} },
+  save: (d) => { 
+    try { 
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ ts:Date.now(), d })); 
+    } catch (e) {
+      console.warn("⚠️ فشل حفظ الكاش:", e);
+    } 
+  },
+  load: () => { 
+    try { 
+      const r = JSON.parse(localStorage.getItem(CACHE_KEY)||"null"); 
+      return r && Date.now() - r.ts < CACHE_TTL ? r.d : null; 
+    } catch { 
+      return null; 
+    } 
+  },
+  clear: () => { 
+    try { 
+      localStorage.removeItem(CACHE_KEY); 
+    } catch {} 
+  },
 };
 const adminStore = {
-  save: (d) => { try { localStorage.setItem(ADMIN_KEY, JSON.stringify(d)); } catch {} },
-  load: () => { try { return JSON.parse(localStorage.getItem(ADMIN_KEY)||"null"); } catch { return null; } },
+  save: (d) => { 
+    try { 
+      localStorage.setItem(ADMIN_KEY, JSON.stringify(d)); 
+    } catch {} 
+  },
+  load: () => { 
+    try { 
+      return JSON.parse(localStorage.getItem(ADMIN_KEY)||"null"); 
+    } catch { 
+      return null; 
+    } 
+  },
 };
 
 /* ════════════════════════════════════════════════════════════════════
    GOOGLE SHEETS  (#6 res.ok check)
 ════════════════════════════════════════════════════════════════════ */
-const CSV_URLS = {
-  settings: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=1276002029&single=true&output=csv",
-  visa:     "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=513051489&single=true&output=csv",
-  transfer: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=532437154&single=true&output=csv",
-  ads:      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=13072504&single=true&output=csv",
-  social:   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=906944007&single=true&output=csv",
-};
 
 function parseCSV(text) {
+  if (!text || typeof text !== 'string') {
+    console.warn("⚠️ نص CSV غير صالح:", text);
+    return [];
+  }
+  
   const rows = [];
   const lines = text.trim().split("\n");
-  lines.forEach(line => {
+  if (lines.length === 0) return [];
+  
+  // تحقق من وجود رؤوس
+  const headers = lines[0].split(',').map(h => h.trim());
+  console.log("📋 رؤوس CSV:", headers);
+  
+  lines.forEach((line, idx) => {
+    if (!line.trim()) return;
+    
     const cols = [];
     let cur = "", inQ = false;
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === "," && !inQ) { cols.push(cur.trim()); cur = ""; }
-      else { cur += ch; }
+      if (ch === '"') { 
+        inQ = !inQ; 
+      }
+      else if (ch === "," && !inQ) { 
+        cols.push(cur.trim()); 
+        cur = ""; 
+      }
+      else { 
+        cur += ch; 
+      }
     }
     cols.push(cur.trim());
-    rows.push(cols);
+    
+    // تأكد من أن عدد الأعمدة مناسب
+    if (cols.length >= headers.length) {
+      rows.push(cols);
+    } else {
+      console.warn(`⚠️ صف ${idx + 1} غير مكتمل:`, cols);
+    }
   });
+  
+  console.log(`✅ تم تحليل ${rows.length} صف من CSV`);
   return rows;
 }
 
 async function fetchSheet(name) {
   const url = CSV_URLS[name];
   if (!url) throw new Error("Unknown sheet: " + name);
-  const res = await fetch(url + "&t=" + Date.now(), { cache: "no-store" });
-  if (!res.ok) throw new Error("HTTP " + res.status + " — sheet: " + name);
-  const text = await res.text();
-  return parseCSV(text);
+  
+  console.log(`🌐 جلب ${name} من:`, url);
+  
+  try {
+    const res = await fetch(url + "&t=" + Date.now(), { 
+      cache: "no-store",
+      mode: 'cors',
+      headers: {
+        'Accept': 'text/csv'
+      }
+    });
+    
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} — ${res.statusText} for sheet: ${name}`);
+    }
+    
+    const text = await res.text();
+    if (!text || text.trim().length === 0) {
+      console.warn(`⚠️ ${name} - استجابة فارغة`);
+      return [];
+    }
+    
+    console.log(`✅ ${name} - تم استلام ${text.length} حرف`);
+    return parseCSV(text);
+  } catch (e) {
+    console.error(`❌ فشل جلب ${name}:`, e);
+    throw e;
+  }
 }
 
 const parseSettings = (rows) => {
   const cfg = { ...DEF_CFG };
-  if (!Array.isArray(rows)) return cfg;
-  rows.slice(1).forEach(r => {
-    const k = (r[0]||"").trim();
-    const v = (r[1]||"").trim();
-    if (k && v) cfg[k] = v;
+  if (!Array.isArray(rows) || rows.length < 2) {
+    console.warn("⚠️ لا توجد بيانات إعدادات كافية");
+    return cfg;
+  }
+  
+  rows.slice(1).forEach((r, idx) => {
+    if (!Array.isArray(r) || r.length < 2) return;
+    const k = (r[0] || "").trim();
+    const v = (r[1] || "").trim();
+    if (k && v) {
+      cfg[k] = v;
+      console.log(`⚙ إعداد: ${k} = ${v.substring(0, 30)}${v.length > 30 ? '...' : ''}`);
+    }
   });
+  
   return cfg;
 };
 
 const parseJobs = (rows) => {
-  if (!Array.isArray(rows)) return [];
-  return rows.slice(1).map((r, i) => ({
-    id:     "sh" + i + "-" + uid(),
-    title:  String(r[0] ?? "").trim(),
-    city:   String(r[1] ?? "").trim(),
-    salary: String(r[2] ?? "").trim(),
-    exp:    String(r[3] ?? "").trim(),
-    urgent: parseUrgent(r[4]),
-    date:   r[5] ?? null,
-    show:   parseShow(r[6]),
-  }))
-  .filter(j => j.show && j.title)
-  .sort((a, b) => {
+  if (!Array.isArray(rows) || rows.length < 2) {
+    console.warn("⚠️ لا توجد بيانات وظائف كافية");
+    return [];
+  }
+  
+  console.log("📋 صفوف الوظائف الخام:", rows.slice(0, 3));
+  
+  const jobs = rows.slice(1).map((r, i) => {
+    if (!Array.isArray(r)) {
+      console.warn(`⚠️ صف ${i + 2} غير صحيح:`, r);
+      return null;
+    }
+    
+    const job = {
+      id:     "sh" + i + "-" + uid(),
+      title:  String(r[0] || "").trim(),
+      city:   String(r[1] || "").trim(),
+      salary: String(r[2] || "").trim(),
+      exp:    String(r[3] || "").trim(),
+      urgent: parseUrgent(r[4]),
+      date:   r[5] || null,
+      show:   parseShow(r[6]),
+    };
+    
+    if (!job.title) {
+      console.log(`⚠️ صف ${i + 2} بدون عنوان:`, r);
+      return null;
+    }
+    
+    return job;
+  })
+  .filter(j => j && j.show);
+  
+  console.log(`✅ تم تحليل ${jobs.length} وظيفة من أصل ${rows.length - 1} صف`);
+  
+  return jobs.sort((a, b) => {
     const da = a.date ? new Date(a.date).getTime() : 0;
     const db = b.date ? new Date(b.date).getTime() : 0;
     return (isNaN(db)?0:db) - (isNaN(da)?0:da);
@@ -405,26 +520,48 @@ const parseJobs = (rows) => {
 };
 
 const parseAds = (rows) => {
-  if (!Array.isArray(rows)) return [];
-  return rows.slice(1).map((r, i) => ({
-    id:          "ad" + i,
-    img:         String(r[0] ?? "").trim(),
-    title:       String(r[1] ?? "").trim(),
-    subtitle:    String(r[2] ?? "").trim(),
-    link:        String(r[3] ?? "#").trim(),
-    color:       String(r[4] ?? "#c9a227").trim(),
-    imgPosition: String(r[5] ?? "center").trim() || "center",
-  })).filter(a => a.title || a.img);
+  if (!Array.isArray(rows) || rows.length < 2) {
+    console.warn("⚠️ لا توجد بيانات إعلانات كافية");
+    return [];
+  }
+  
+  const ads = rows.slice(1).map((r, i) => {
+    if (!Array.isArray(r)) return null;
+    
+    return {
+      id:          "ad" + i + "-" + uid(),
+      img:         String(r[0] || "").trim(),
+      title:       String(r[1] || "").trim(),
+      subtitle:    String(r[2] || "").trim(),
+      link:        String(r[3] || "#").trim(),
+      color:       String(r[4] || "#c9a227").trim(),
+      imgPosition: String(r[5] || "center").trim() || "center",
+    };
+  }).filter(a => a && (a.title || a.img));
+  
+  console.log(`✅ تم تحليل ${ads.length} إعلان`);
+  return ads;
 };
 
 const parseSocial = (rows) => {
-  if (!Array.isArray(rows)) return [];
-  return rows.slice(1).map(r => ({
-    platform:  String(r[0] ?? "").trim().toLowerCase(),
-    url:       String(r[1] ?? "").trim(),
-    icon:      String(r[2] ?? "").trim(),
-    iconHover: String(r[3] ?? "").trim(),
-  })).filter(s => s.platform && s.url);
+  if (!Array.isArray(rows) || rows.length < 2) {
+    console.warn("⚠️ لا توجد بيانات سوشيال كافية");
+    return [];
+  }
+  
+  const social = rows.slice(1).map(r => {
+    if (!Array.isArray(r) || r.length < 2) return null;
+    
+    return {
+      platform:  String(r[0] || "").trim().toLowerCase(),
+      url:       String(r[1] || "").trim(),
+      icon:      String(r[2] || "").trim(),
+      iconHover: String(r[3] || "").trim(),
+    };
+  }).filter(s => s && s.platform && s.url);
+  
+  console.log(`✅ تم تحليل ${social.length} حساب سوشيال`);
+  return social;
 };
 
 /* ════════════════════════════════════════════════════════════════════
@@ -530,7 +667,7 @@ const JobCard = memo(({ job, googleForm, applyBtnText, idx = 0, cfg = {} }) => {
 });
 
 /* ════════════════════════════════════════════════════════════════════
-   AD SLIDER  — fully animated, 3D depth
+   AD SLIDER
 ════════════════════════════════════════════════════════════════════ */
 const AdSlider = memo(({ ads }) => {
   const [cur,    setCur]    = useState(0);
@@ -579,7 +716,6 @@ const AdSlider = memo(({ ads }) => {
           minHeight:230,
         }}
       >
-        {/* Slide content */}
         <a href={ad.link || "#"} target="_blank" rel="noopener noreferrer" style={{ display:"block", textDecoration:"none" }}>
           <div
             style={{
@@ -591,7 +727,6 @@ const AdSlider = memo(({ ads }) => {
                 : "radial-gradient(ellipse at 25% 60%, rgba(" + hexRgb(acol) + ",.2) 0%, transparent 65%), radial-gradient(ellipse at 80% 30%, rgba(" + hexRgb(acol) + ",.08) 0%, transparent 50%), var(--dark2)",
             }}
           >
-            {/* Decorative grid lines */}
             <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px)", backgroundSize:"32px 32px", pointerEvents:"none" }} />
 
             <div style={{ textAlign:"center", position:"relative", zIndex:1 }}>
@@ -611,7 +746,6 @@ const AdSlider = memo(({ ads }) => {
           </div>
         </a>
 
-        {/* Arrows */}
         {ads.length > 1 && <>
           <button className="sl-arrow" aria-label="السابق" onClick={() => go((cur - 1 + ads.length) % ads.length, -1)}
             style={{ position:"absolute", top:"50%", right:16, transform:"translateY(-50%)" }}>‹</button>
@@ -619,7 +753,6 @@ const AdSlider = memo(({ ads }) => {
             style={{ position:"absolute", top:"50%", left:16,  transform:"translateY(-50%)" }}>›</button>
         </>}
 
-        {/* Progress bar */}
         <div style={{ position:"absolute", bottom:0, left:0, right:0, height:2.5, background:"rgba(255,255,255,.08)" }}>
           {!paused && (
             <div ref={progressRef} key={cur + "-" + paused} style={{ height:"100%", background:"linear-gradient(90deg," + acol + "," + hexLighten(acol) + ")", animation:"ticker 5s linear forwards", width:"100%", transformOrigin:"left" }} />
@@ -627,7 +760,6 @@ const AdSlider = memo(({ ads }) => {
         </div>
       </div>
 
-      {/* Dots */}
       {ads.length > 1 && (
         <div style={{ display:"flex", justifyContent:"center", gap:8, marginTop:16 }}>
           {ads.map((_, i) => (
@@ -640,7 +772,6 @@ const AdSlider = memo(({ ads }) => {
   );
 });
 
-/* ── Social button style helper ── */
 const socialBtn = (color) => ({
   display:"inline-flex", alignItems:"center", justifyContent:"center",
   width:40, height:40, borderRadius:"50%",
@@ -650,9 +781,9 @@ const socialBtn = (color) => ({
 });
 
 /* ════════════════════════════════════════════════════════════════════
-   PARALLAX HEADER  — mouse-tracking 3D logo
+   PARALLAX HEADER
 ════════════════════════════════════════════════════════════════════ */
-const Header = memo(({ cfg, social = {}, error }) => {
+const Header = memo(({ cfg, social = [], error, onRetry }) => {
   const [mouse, setMouse] = useState({ x:0, y:0 });
   const ref = useRef(null);
   const raf = useRef(null);
@@ -673,14 +804,12 @@ const Header = memo(({ cfg, social = {}, error }) => {
     <header ref={ref} onMouseMove={onMove} onMouseLeave={() => setMouse({ x:0, y:0 })}
       style={{ textAlign:"center", padding:"68px 24px 44px", position:"relative", overflow:"hidden" }}>
 
-      {/* Ambient orbs */}
       {[["-10%","20%","400px","rgba(201,162,39,.06)","0s"],
         ["60%","10%","300px","rgba(59,130,246,.05)","1s"],
         ["30%","80%","250px","rgba(139,92,246,.04)","2s"]].map(([l,t,s,c,d], i) => (
         <div key={i} style={{ position:"absolute", left:l, top:t, width:s, height:s, borderRadius:"50%", background:"radial-gradient(circle," + c + ",transparent 70%)", animation:"orb " + (12+i*3) + "s ease-in-out " + d + " infinite", pointerEvents:"none" }} />
       ))}
 
-      {/* Logo with parallax + float */}
       <div style={{
         display:"inline-block", marginBottom:26,
         transform:"perspective(700px) rotateX(" + (-mouse.y*.35) + "deg) rotateY(" + (mouse.x*.5) + "deg) translateZ(14px)",
@@ -692,7 +821,6 @@ const Header = memo(({ cfg, social = {}, error }) => {
           style={{ height:94, display:"block" }} />
       </div>
 
-      {/* Site name */}
       <h1 style={{
         fontSize:"clamp(1.3rem,3.5vw,2.2rem)", fontWeight:900, lineHeight:1.25,
         background:"linear-gradient(135deg,var(--gold) 0%,var(--gold2) 35%,#fff 55%,var(--gold) 100%)",
@@ -715,10 +843,17 @@ const Header = memo(({ cfg, social = {}, error }) => {
       {error && (
         <div role="alert" style={{ display:"inline-flex", alignItems:"center", gap:8, marginTop:14, padding:"6px 16px", background:"rgba(248,113,113,.1)", border:"1px solid rgba(248,113,113,.25)", borderRadius:50, color:"#f87171", fontSize:12, fontWeight:600 }}>
           ⚠ {error}
+          {onRetry && (
+            <button 
+              onClick={onRetry}
+              style={{ background:"none", border:"1px solid currentColor", borderRadius:20, padding:"3px 10px", marginRight:8, cursor:"pointer", color:"#f87171" }}
+            >
+              إعادة المحاولة
+            </button>
+          )}
         </div>
       )}
 
-      {/* Social media links */}
       {social.length > 0 && (
         <div style={{ display:"flex", gap:16, justifyContent:"center", marginTop:22, flexWrap:"wrap", alignItems:"center" }}>
           {social.map((s, i) => {
@@ -795,12 +930,12 @@ const StatsBar = memo(({ visa, trans, cfg }) => { cfg = cfg || {};
 });
 
 /* ════════════════════════════════════════════════════════════════════
-   JOBS TICKER  (scrolling urgent jobs strip)
+   JOBS TICKER
 ════════════════════════════════════════════════════════════════════ */
 const JobsTicker = memo(({ jobs }) => {
   const urgent = jobs.filter(j => j.urgent);
   if (!urgent.length) return null;
-  const items = [...urgent, ...urgent]; // double for seamless loop
+  const items = [...urgent, ...urgent];
   return (
     <div style={{ overflow:"hidden", background:"linear-gradient(90deg,rgba(201,162,39,.08),rgba(201,162,39,.12),rgba(201,162,39,.08))", borderTop:"1px solid var(--border)", borderBottom:"1px solid var(--border)", padding:"10px 0", marginBottom:40 }}>
       <div className="ticker-track" style={{ whiteSpace:"nowrap" }}>
@@ -900,7 +1035,7 @@ const AdminLogin = ({ onOk, onClose }) => {
 };
 
 /* ════════════════════════════════════════════════════════════════════
-   ADMIN PANEL — field components outside to prevent input re-mount
+   ADMIN PANEL
 ════════════════════════════════════════════════════════════════════ */
 const JobField = ({ label, fkey, form, setForm }) => (
   <div>
@@ -984,7 +1119,6 @@ const AdminPanel = ({ state, setState, onClose }) => {
     if (!f) return;
     const b64 = await fileToBase64(f).catch(()=>null);
     if (b64) setAdForm(x => ({ ...x, img: b64 }));
-    // Reset input so same file can be re-selected
     e.target.value = "";
   };
 
@@ -1083,18 +1217,15 @@ const AdminPanel = ({ state, setState, onClose }) => {
                   <button className="btn btn-gold" style={{ padding:"9px 20px", fontSize:13 }} onClick={()=>openAd(null)}>+ إعلان جديد</button>
                 </div>
 
-                {/* ── Edit / Add Form ── */}
                 {adEdit && (
                   <div style={{ background:"var(--dark3)", border:"2px solid var(--gold)", borderRadius:"var(--r)", padding:20, marginBottom:20 }}>
                     <div style={{ fontWeight:700, fontSize:14, color:"var(--gold)", marginBottom:14 }}>
                       {adEdit === "NEW" ? "➕ إضافة إعلان جديد" : "✏️ تعديل الإعلان"}
                     </div>
 
-                    {/* Image upload — big & clear */}
                     <div style={{ marginBottom:16, background:"var(--dark4)", borderRadius:12, padding:14, border:"1px dashed var(--border)" }}>
                       <div style={{ fontWeight:700, fontSize:13, marginBottom:10, color:"var(--text)" }}>📸 صورة البانر</div>
                       
-                      {/* Preview */}
                       {adForm.img ? (
                         <div style={{ position:"relative", marginBottom:12 }}>
                           <img src={adForm.img} alt="preview"
@@ -1111,21 +1242,18 @@ const AdminPanel = ({ state, setState, onClose }) => {
                         </div>
                       )}
 
-                      {/* Upload button */}
                       <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, padding:"12px", background:"linear-gradient(135deg,var(--gold),var(--gold2))", borderRadius:10, cursor:"pointer", fontSize:14, color:"#080604", fontWeight:800, fontFamily:"Cairo,sans-serif", marginBottom:10 }}>
                         📁 اختر صورة من جهازك
                         <input type="file" accept="image/*,image/gif" onChange={onAdImg} style={{ display:"none" }} />
                       </label>
                       <p style={{ fontSize:11, color:"var(--text2)", textAlign:"center", marginBottom:8 }}>يدعم JPG، PNG، GIF متحركة، WebP</p>
 
-                      {/* Or URL */}
                       <div>
                         <label style={{ fontSize:11, color:"var(--text2)", marginBottom:4, display:"block" }}>أو الصق رابط صورة (URL):</label>
                         <AdField label="" fkey="img" adForm={adForm} setAdForm={setAdForm} />
                       </div>
                     </div>
 
-                    {/* Title & Subtitle */}
                     <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:12 }}>
                       <AdField label="عنوان الإعلان" fkey="title"    adForm={adForm} setAdForm={setAdForm} />
                       <AdField label="نص فرعي"        fkey="subtitle" adForm={adForm} setAdForm={setAdForm} />
@@ -1146,12 +1274,10 @@ const AdminPanel = ({ state, setState, onClose }) => {
                   </div>
                 )}
 
-                {/* ── Ads List ── */}
                 <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
                   {ads.length === 0 && <p style={{ color:"var(--text2)", textAlign:"center", padding:"2rem" }}>لا توجد إعلانات</p>}
                   {ads.map((a, idx) => (
                     <div key={a.id} style={{ background:"var(--dark3)", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden", display:"flex", gap:0, alignItems:"stretch" }}>
-                      {/* Thumbnail */}
                       <div style={{ width:100, flexShrink:0, background:a.color||"var(--gold)", position:"relative" }}>
                         {a.img
                           ? <img src={a.img} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
@@ -1159,13 +1285,11 @@ const AdminPanel = ({ state, setState, onClose }) => {
                         }
                         <div style={{ position:"absolute", top:4, right:4, background:"rgba(0,0,0,.6)", borderRadius:6, padding:"2px 6px", fontSize:10, color:"#fff" }}>#{idx+1}</div>
                       </div>
-                      {/* Info */}
                       <div style={{ flex:1, padding:"12px 14px" }}>
                         <div style={{ fontWeight:700, fontSize:14, marginBottom:4 }}>{a.title||"بدون عنوان"}</div>
                         <div style={{ fontSize:12, color:"var(--text2)", marginBottom:4 }}>{a.subtitle}</div>
                         {a.img && <div style={{ fontSize:10, color:"var(--gold)", opacity:.7 }}>📸 يحتوي على صورة</div>}
                       </div>
-                      {/* Actions */}
                       <div style={{ display:"flex", flexDirection:"column", gap:6, padding:10, justifyContent:"center" }}>
                         <button className="btn btn-ghost" style={{ padding:"6px 14px", fontSize:12 }} onClick={()=>openAd(a)}>✏ تعديل</button>
                         <button className="btn btn-danger" style={{ padding:"6px 14px", fontSize:12 }} onClick={()=>deleteAd(a.id)}>🗑 حذف</button>
@@ -1207,36 +1331,8 @@ const AdminPanel = ({ state, setState, onClose }) => {
                         </div>
                         <label style={{ display:"inline-flex", alignItems:"center", gap:7, padding:"9px 15px", background:"rgba(255,255,255,.04)", border:"1px solid var(--border)", borderRadius:9, cursor:"pointer", fontSize:12, color:"var(--text)", fontFamily:"Cairo,sans-serif" }}>
                           📁 رفع لوجو
-                          <input type="file" accept="image/*" onChange={async e => {
-                            const f=e.target.files?.[0]; if(!f) return;
-                            const b=await fileToBase64(f).catch(()=>null);
-                            if(b) setCfgF(x=>({...x,logoSrc:b}));
-                          }} style={{ display:"none" }} />
+                          <input type="file" accept="image/*" onChange={onLogo} style={{ display:"none" }} />
                         </label>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize:12, color:"var(--text2)", marginBottom:8 }}>الأيقونة (Favicon)</div>
-                      <div style={{ display:"flex", gap:12, alignItems:"center" }}>
-                        <div style={{ width:48, height:48, borderRadius:8, border:"1px solid var(--border)", background:"rgba(255,255,255,.06)", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>
-                          {cfgF.faviconSrc ? <img src={cfgF.faviconSrc} alt="" style={{ width:36, height:36, objectFit:"contain" }} /> : <span style={{ fontSize:22 }}>🏥</span>}
-                        </div>
-                        <div>
-                          <label style={{ display:"inline-flex", alignItems:"center", gap:7, padding:"9px 15px", background:"rgba(255,255,255,.04)", border:"1px solid var(--border)", borderRadius:9, cursor:"pointer", fontSize:12, color:"var(--text)", fontFamily:"Cairo,sans-serif" }}>
-                            📁 رفع أيقونة
-                            <input type="file" accept="image/*" onChange={async e => {
-                              const f=e.target.files?.[0]; if(!f) return;
-                              const b=await fileToBase64(f).catch(()=>null);
-                              if(b) {
-                                setCfgF(x=>({...x,faviconSrc:b}));
-                                let lnk=document.querySelector("link[rel~='icon']");
-                                if(!lnk){lnk=document.createElement("link");lnk.rel="icon";document.head.appendChild(lnk);}
-                                lnk.href=b;
-                              }
-                            }} style={{ display:"none" }} />
-                          </label>
-                          <p style={{ fontSize:10, color:"var(--text2)", marginTop:4 }}>أيقونة تاب المتصفح</p>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -1296,7 +1392,6 @@ const AdminPanel = ({ state, setState, onClose }) => {
                         <div key={k} style={{ background:"var(--dark4)", borderRadius:10, padding:12 }}>
                           <label style={{ fontSize:12, color:"var(--text2)", marginBottom:8, display:"block", fontWeight:600 }}>{lbl}</label>
                           
-                          {/* Preview */}
                           <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:8 }}>
                             <div style={{ width:44, height:44, borderRadius:8, background:"rgba(255,255,255,.05)", border:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
                               {isImg
@@ -1312,7 +1407,6 @@ const AdminPanel = ({ state, setState, onClose }) => {
                             </div>
                           </div>
 
-                          {/* Upload buttons */}
                           <div style={{ display:"flex", gap:6 }}>
                             <label style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:5, padding:"7px 8px", background:"rgba(201,162,39,.15)", border:"1px solid rgba(201,162,39,.3)", borderRadius:8, cursor:"pointer", fontSize:11, color:"var(--gold)", fontFamily:"Cairo,sans-serif", textAlign:"center" }}>
                               📸 صورة/GIF
@@ -1342,13 +1436,11 @@ const AdminPanel = ({ state, setState, onClose }) => {
   );
 };
 
-
 /* ════════════════════════════════════════════════════════════════════
    MAIN APP
 ════════════════════════════════════════════════════════════════════ */
 export default function App() {
 
-  /* ── Shared state ──────────────────────────────────────── */
   const [S, setS] = useState({
     visaJobs:  SEED_VISA,
     transJobs: SEED_TRANS,
@@ -1358,7 +1450,6 @@ export default function App() {
     social:    [],
   });
 
-  /* ── UI state ──────────────────────────────────────────── */
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState(null);
   const [tab,         setTab]         = useState("visa");
@@ -1370,32 +1461,85 @@ export default function App() {
   const [adminOpen,   setAdminOpen]   = useState(false);
   const [scrollY,     setScrollY]     = useState(0);
 
-  /* ── Scroll parallax ───────────────────────────────────── */
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
     window.addEventListener("scroll", onScroll, { passive:true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* ── Fade in ───────────────────────────────────────────── */
   useEffect(() => { requestAnimationFrame(() => setTimeout(() => setVis(true), 60)); }, []);
 
-  /* ── Load saved admin data ─────────────────────────────── */
   useEffect(() => {
     const saved = adminStore.load();
     if (saved) setS(saved);
   }, []);
 
-  /* ── Fetch from Google Sheets ──────────────────────────── */
-  useEffect(() => {
-    const applySheets = ({ stT, vjT, tjT, adT, soT }) => {
-      const newCfg    = stT ? parseSettings(stT) : DEF_CFG;
-      const vj        = vjT ? parseJobs(vjT)     : [];
-      const tj        = tjT ? parseJobs(tjT)     : [];
-      const newAds    = adT ? parseAds(adT)      : [];
-      const newSocial = soT ? parseSocial(soT)   : {};
-      const citiesRaw = [...new Set([...vj,...tj].map(j=>j.city).filter(Boolean))];
-
+  const fetchAllSheets = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log("🔄 بدء تحميل البيانات من جوجل شيت...");
+      
+      let settingsRows = [];
+      let visaRows = [];
+      let transferRows = [];
+      let adsRows = [];
+      let socialRows = [];
+      
+      // جلب كل شيت على حدة مع معالجة الأخطاء
+      try {
+        settingsRows = await fetchSheet("settings");
+        console.log("✅ تم تحميل settings:", settingsRows.length, "صف");
+      } catch (e) {
+        console.warn("⚠️ فشل تحميل settings:", e);
+      }
+      
+      try {
+        visaRows = await fetchSheet("visa");
+        console.log("✅ تم تحميل visa:", visaRows.length, "صف");
+      } catch (e) {
+        console.warn("⚠️ فشل تحميل visa:", e);
+      }
+      
+      try {
+        transferRows = await fetchSheet("transfer");
+        console.log("✅ تم تحميل transfer:", transferRows.length, "صف");
+      } catch (e) {
+        console.warn("⚠️ فشل تحميل transfer:", e);
+      }
+      
+      try {
+        adsRows = await fetchSheet("ads");
+        console.log("✅ تم تحميل ads:", adsRows.length, "صف");
+      } catch (e) {
+        console.warn("⚠️ فشل تحميل ads:", e);
+      }
+      
+      try {
+        socialRows = await fetchSheet("social");
+        console.log("✅ تم تحميل social:", socialRows.length, "صف");
+      } catch (e) {
+        console.warn("⚠️ فشل تحميل social:", e);
+      }
+      
+      // معالجة البيانات
+      const newCfg    = settingsRows.length ? parseSettings(settingsRows) : DEF_CFG;
+      const vj        = visaRows.length ? parseJobs(visaRows) : [];
+      const tj        = transferRows.length ? parseJobs(transferRows) : [];
+      const newAds    = adsRows.length ? parseAds(adsRows) : [];
+      const newSocial = socialRows.length ? parseSocial(socialRows) : [];
+      
+      console.log("📊 نتائج المعالجة:", {
+        cfg: Object.keys(newCfg).length,
+        visaJobs: vj.length,
+        transJobs: tj.length,
+        ads: newAds.length,
+        social: newSocial.length
+      });
+      
+      const citiesRaw = [...new Set([...vj, ...tj].map(j => j.city).filter(Boolean))];
+      
       setS(prev => ({
         ...prev,
         cfg:       newCfg,
@@ -1405,54 +1549,75 @@ export default function App() {
         cities:    citiesRaw.length ? citiesRaw : prev.cities,
         social:    newSocial.length ? newSocial : prev.social,
       }));
-    };
-
-    async function load() {
-      const hit = cache.load();
-      if (hit) { applySheets(hit); setLoading(false); return; }
-      try {
-        const [stT, vjT, tjT, adT, soT] = await Promise.allSettled([
-          fetchSheet("settings"),
-          fetchSheet("visa"),
-          fetchSheet("transfer"),
-          fetchSheet("ads"),
-          fetchSheet("social"),
-        ]);
-        const raw = {
-          stT: stT.status==="fulfilled" ? stT.value : null,
-          vjT: vjT.status==="fulfilled" ? vjT.value : null,
-          tjT: tjT.status==="fulfilled" ? tjT.value : null,
-          adT: adT.status==="fulfilled" ? adT.value : null,
-          soT: soT.status==="fulfilled" ? soT.value : null,
-        };
-        cache.save(raw);
-        applySheets(raw);
-      } catch (e) {
-        console.warn("Sheets error:", e);
-        setError("تعذّر الاتصال بالبيانات — يتم عرض البيانات الافتراضية");
-      } finally {
-        setLoading(false);
+      
+      // حفظ في الكاش
+      const cacheData = {
+        stT: settingsRows,
+        vjT: visaRows,
+        tjT: transferRows,
+        adT: adsRows,
+        soT: socialRows,
+      };
+      cache.save(cacheData);
+      
+      if (!settingsRows.length && !visaRows.length && !transferRows.length && !adsRows.length && !socialRows.length) {
+        setError("لم يتم تحميل أي بيانات من جوجل شيت - يتم عرض البيانات الافتراضية");
       }
+      
+    } catch (e) {
+      console.error("🔥 خطأ في تحميل البيانات:", e);
+      setError("حدث خطأ في الاتصال بجوجل شيت - يتم عرض البيانات الافتراضية");
+    } finally {
+      setLoading(false);
     }
-    load();
+  };
+
+  useEffect(() => {
+    const loadFromCache = async () => {
+      const hit = cache.load();
+      if (hit) {
+        console.log("📦 استخدام البيانات من الكاش");
+        
+        const newCfg    = hit.stT ? parseSettings(hit.stT) : DEF_CFG;
+        const vj        = hit.vjT ? parseJobs(hit.vjT) : [];
+        const tj        = hit.tjT ? parseJobs(hit.tjT) : [];
+        const newAds    = hit.adT ? parseAds(hit.adT) : [];
+        const newSocial = hit.soT ? parseSocial(hit.soT) : [];
+        const citiesRaw = [...new Set([...vj, ...tj].map(j => j.city).filter(Boolean))];
+        
+        setS(prev => ({
+          ...prev,
+          cfg:       newCfg,
+          visaJobs:  vj.length  ? vj      : prev.visaJobs,
+          transJobs: tj.length  ? tj      : prev.transJobs,
+          ads:       newAds.length ? newAds : prev.ads,
+          cities:    citiesRaw.length ? citiesRaw : prev.cities,
+          social:    newSocial.length ? newSocial : prev.social,
+        }));
+        
+        setLoading(false);
+      } else {
+        await fetchAllSheets();
+      }
+    };
+    
+    loadFromCache();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── Filtered jobs  (#3 safe toLowerCase) ──────────────── */
   const allJobs = tab === "visa" ? S.visaJobs : S.transJobs;
   const filtered = useMemo(() => {
     const q = titleF.trim().toLowerCase();
     return allJobs
       .filter(j => j.show !== false)
       .filter(j =>
-        (j.title ?? "").toLowerCase().includes(q) &&   // #3
-        (cityF === "" || (j.city ?? "") === cityF)      // #10
+        (j.title ?? "").toLowerCase().includes(q) &&
+        (cityF === "" || (j.city ?? "") === cityF)
       );
   }, [allJobs, titleF, cityF]);
 
   const visible = filtered.slice(0, count);
 
-  /* ── Admin shortcut: triple-click footer ───────────────── */
   const clickCount = useRef(0);
   const onFooterClick = () => {
     clickCount.current++;
@@ -1460,34 +1625,26 @@ export default function App() {
     setTimeout(() => { clickCount.current = 0; }, 900);
   };
 
-  /* ── Parallax offset for bg grid ───────────────────────── */
   const gridOffset = scrollY * 0.15;
 
   return (
     <>
       <style>{GLOBAL_CSS}</style>
 
-      {/* Ambient bg grid with scroll parallax */}
       <div className="bg-grid" style={{ backgroundPosition:"0 " + gridOffset + "px" }} />
 
       <div style={{ position:"relative", zIndex:1, minHeight:"100vh", opacity:vis?1:0, transition:"opacity .65s ease" }}>
 
-        {/* ── SEO title ── */}
         <title>{S.cfg.siteName}</title>
 
-        {/* ── HEADER ── */}
-        <Header cfg={S.cfg} social={S.social} error={error} />
+        <Header cfg={S.cfg} social={S.social} error={error} onRetry={fetchAllSheets} />
 
-        {/* ── URGENT TICKER ── */}
         <JobsTicker jobs={[...S.visaJobs, ...S.transJobs]} />
 
-        {/* ── AD SLIDER ── */}
         <AdSlider ads={S.ads} />
 
-        {/* ── STATS ── */}
         <StatsBar visa={S.visaJobs} trans={S.transJobs} cfg={S.cfg} />
 
-        {/* ── TABS ── */}
         <div style={{ display:"flex", justifyContent:"center", gap:12, marginBottom:32, padding:"0 24px" }}>
           {[["visa","✈ تأشيرات"],["transfer","🔄 نقل كفالة"]].map(([id, label]) => (
             <button key={id} className={"tab " + (tab===id?"tab-on":"tab-off")}
@@ -1497,7 +1654,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* ── FILTERS ── */}
         <div style={{ maxWidth:840, margin:"0 auto 40px", padding:"0 24px", display:"flex", gap:10, flexWrap:"wrap" }}>
           <input type="text" className="field" placeholder="🔍 ابحث عن وظيفة أو تخصص..."
             value={titleF}
@@ -1511,7 +1667,6 @@ export default function App() {
           </select>
         </div>
 
-        {/* ── JOB GRID ── */}
         <div style={{ maxWidth:1240, margin:"0 auto", padding:"0 24px" }}>
           {loading ? (
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))", gap:24 }}>
@@ -1531,7 +1686,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Load more */}
           {!loading && visible.length < filtered.length && (
             <div style={{ textAlign:"center", marginTop:44, marginBottom:16 }}>
               <button className="btn btn-ghost" style={{ padding:"14px 48px", fontSize:14 }}
@@ -1542,7 +1696,6 @@ export default function App() {
           )}
         </div>
 
-        {/* ── INSTITUTIONAL SECTION ── */}
         <section style={{ maxWidth:900, margin:"0 auto 0", padding:"0 24px 80px" }}>
           <div style={{
             background:"linear-gradient(135deg,rgba(201,162,39,.07) 0%,rgba(201,162,39,.03) 100%)",
@@ -1553,11 +1706,9 @@ export default function App() {
             position:"relative",
             overflow:"hidden",
           }}>
-            {/* Decorative corner */}
             <div style={{ position:"absolute", top:-40, left:-40, width:120, height:120, borderRadius:"50%", background:"radial-gradient(circle,rgba(201,162,39,.12),transparent)", pointerEvents:"none" }} />
             <div style={{ position:"absolute", bottom:-40, right:-40, width:120, height:120, borderRadius:"50%", background:"radial-gradient(circle,rgba(201,162,39,.08),transparent)", pointerEvents:"none" }} />
 
-            {/* Badge */}
             <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(201,162,39,.12)", border:"1px solid rgba(201,162,39,.3)", borderRadius:50, padding:"5px 18px", fontSize:12, fontWeight:700, color:"var(--gold)", marginBottom:20, letterSpacing:.5 }}>
               🏥 للمؤسسات والمجموعات الطبية
             </div>
@@ -1571,7 +1722,6 @@ export default function App() {
               تواصل معنا وسنتولى كل خطوات التوظيف والاستقدام.
             </p>
 
-            {/* Email button */}
             <a href="mailto:elmagd008@gmail.com"
               style={{
                 display:"inline-flex", alignItems:"center", gap:10,
@@ -1593,7 +1743,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* ── FOOTER ── */}
         <footer onClick={onFooterClick}
           style={{ textAlign:"center", marginTop:0, padding:"28px 24px", borderTop:"1px solid rgba(255,255,255,.04)", color:"var(--text2)", fontSize:12, cursor:"default", userSelect:"none" }}>
           <div style={{ fontSize:24, marginBottom:8, opacity:.5 }}>⚕</div>
@@ -1601,7 +1750,6 @@ export default function App() {
           <p style={{ marginTop:6, opacity:.3, fontSize:10 }}>اضغط على الأيقونة أعلاه ثلاث مرات لفتح لوحة التحكم</p>
         </footer>
 
-        {/* ── Admin gear btn (top-left corner) ── */}
         <button onClick={() => setAdminLogin(true)} aria-label="لوحة التحكم"
           style={{ position:"fixed", top:16, left:16, zIndex:900, background:"rgba(255,255,255,.04)", border:"1px solid rgba(255,255,255,.06)", borderRadius:10, padding:"7px 11px", color:"rgba(255,255,255,.18)", cursor:"pointer", fontSize:14, transition:"all .2s" }}
           onMouseEnter={e => { e.currentTarget.style.color="var(--gold)"; e.currentTarget.style.borderColor="var(--border)"; }}
@@ -1609,11 +1757,9 @@ export default function App() {
           ⚙
         </button>
 
-        {/* ── FLOATING WA ── */}
         <FloatingWA cfg={S.cfg} />
       </div>
 
-      {/* ── MODALS ── */}
       {adminLogin && !adminOpen && (
         <AdminLogin onOk={() => { setAdminLogin(false); setAdminOpen(true); }} onClose={() => setAdminLogin(false)} />
       )}
