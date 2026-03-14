@@ -12,7 +12,6 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS--X_f_k-M3e
 
 function App() {
   const [settings, setSettings] = useState({});
-  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,21 +21,23 @@ function App() {
         const csvText = await response.text();
         
         Papa.parse(csvText, {
-          header: false, // خليناها false عشان نقرأ الأعمدة يدوي
+          header: false, // لازم false عشان شيتك رأسي
           skipEmptyLines: true,
           complete: (results) => {
             const rows = results.data;
             const config = {};
             
-            // هنا بنحول الشكل الرأسي (A و B) لشكل يفهمه الكود
+            // تحويل الشيت الرأسي لكائن يفهمه الكود
             rows.forEach(row => {
               if (row[0] && row[1]) {
-                config[row[0].trim()] = row[1].trim();
+                const key = row[0].trim();
+                const value = row[1].trim();
+                config[key] = value;
               }
             });
 
+            console.log("Config Loaded:", config); // للتأكد في المتصفح
             setSettings(config);
-            setData(rows); 
             setLoading(false);
           },
         });
@@ -50,28 +51,30 @@ function App() {
 
   if (loading) return <div style={{textAlign:'center', marginTop:'50px'}}>جاري التحديث...</div>;
 
-  // تحديد اللوجو (من الشيت أو الرابط الاحتياطي)
-  const finalLogo = settings.logoUrl || "https://i.postimg.cc/RFYB8gjL/1000273592_cd331d30c881c099ee519b011cb86f56_3_3_2026_5_26_08_PM.png";
+  // هنا بنقرأ من الاسم اللي في الخلية A17 عندك وهو logoSrc
+  const finalLogo = settings.logoSrc || settings.logoUrl || "https://i.postimg.cc/RFYB8gjL/1000273592_cd331d30c881c099ee519b011cb86f56_3_3_2026_5_26_08_PM.png";
 
   return (
     <div className="App">
-      <Navbar logo={finalLogo} brandName={settings.brandName || "المجد جروب"} />
+      <Navbar logo={finalLogo} brandName={settings.siteName || "المجد جروب"} />
       
       <main>
         <Hero 
           title={settings.heroTitle} 
-          subtitle={settings.heroSubtitle} 
+          subtitle={settings.heroDesc} 
           image={settings.heroImage} 
         />
-        <Categories data={data} />
-        <Jobs data={data} />
+        {/* نمرر الـ settings كاملة للأقسام الأخرى */}
+        <Categories data={settings} />
+        <Jobs data={settings} />
+        
         <Contact 
-          phone={settings.contactPhone} 
-          email={settings.contactEmail} 
+          phone={settings.waEgyptNum} 
+          email={settings.email} 
           location={settings.location}
         />
       </main>
-      <Footer brandName={settings.brandName || "المجد جروب"} />
+      <Footer brandName={settings.siteName || "المجد جروب"} />
     </div>
   );
 }
