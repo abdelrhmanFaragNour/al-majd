@@ -8,8 +8,8 @@ import Contact from "./components/Contact";
 import Footer from "./components/Footer";
 import "./App.css";
 
-// أفضل رابط (export مباشر – أقل مشاكل)
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/1ooZmCk2uvkHqJDkWeYMcop9qzq9rVDkDenW8/export?format=csv&gid=1276002029";
+// رابط الشيت الجديد (public CSV)
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ6cGQr0Zu2Il5Df-ULm2h4jEfPi1bklr6uUF5g28nktjZK_yfk8tDCI92wC0oFKwitJXmEwn3UFs1/pub?gid=1276002029&single=true&output=csv";
 
 function App() {
   const [settings, setSettings] = useState({});
@@ -18,10 +18,9 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // cache buster قوي جدًا
         const cacheBuster = Date.now() + '-' + Math.random().toString(36).substring(2, 10);
-        const response = await fetch(`${SHEET_URL}?cb=${cacheBuster}`, {
-          cache: 'no-store', // يمنع الكاش تمامًا
+        const response = await fetch(`${SHEET_URL}&cb=${cacheBuster}`, {
+          cache: 'no-store',
         });
 
         if (!response.ok) {
@@ -29,6 +28,7 @@ function App() {
         }
 
         const csvText = await response.text();
+        console.log("CSV RAW:", csvText); // للتأكد إن البيانات جاية
 
         Papa.parse(csvText, {
           header: false,
@@ -37,11 +37,11 @@ function App() {
             const config = {};
             results.data.forEach(row => {
               if (row[0] && row[1]) {
-                const key = row[0].trim().replace(/\s+/g, ''); // تنظيف المفتاح
+                const key = row[0].trim().replace(/\s+/g, '');
                 config[key] = row[1].trim();
               }
             });
-            console.log("البيانات من الشيت:", config); // افتح console تشوف
+            console.log("البيانات من الشيت:", config);
             setSettings(config);
             setLoading(false);
           },
