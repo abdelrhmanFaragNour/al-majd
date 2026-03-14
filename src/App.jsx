@@ -17,54 +17,55 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // إضافة توقيت t لضمان عدم حدوث تعليق (Cache)
         const response = await fetch(`${SHEET_URL}&t=${new Date().getTime()}`);
         const csvText = await response.text();
         
         Papa.parse(csvText, {
-          header: false, // لازم false عشان شيتك رأسي
+          header: false, // شيت رأسي يعني مفيش عناوين عرضية
           skipEmptyLines: true,
           complete: (results) => {
-            const rows = results.data;
             const config = {};
-            
-            // تحويل الشيت الرأسي لكائن يفهمه الكود
-            rows.forEach(row => {
+            // تحويل العمود A والعمود B لكلمات مفتاحية وقيم
+            results.data.forEach(row => {
               if (row[0] && row[1]) {
                 const key = row[0].trim();
                 const value = row[1].trim();
                 config[key] = value;
               }
             });
-
-            console.log("Config Loaded:", config); // للتأكد في المتصفح
             setSettings(config);
             setLoading(false);
           },
         });
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Error fetching sheet:", error);
         setLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  if (loading) return <div style={{textAlign:'center', marginTop:'50px'}}>جاري التحديث...</div>;
+  if (loading) return <div style={{textAlign:'center', marginTop:'100px', fontSize:'20px'}}>جاري تحديث بيانات المجد جروب...</div>;
 
-  // هنا بنقرأ من الاسم اللي في الخلية A17 عندك وهو logoSrc
-  const finalLogo = settings.logoSrc || settings.logoUrl || "https://i.postimg.cc/RFYB8gjL/1000273592_cd331d30c881c099ee519b011cb86f56_3_3_2026_5_26_08_PM.png";
+  // الربط المباشر مع أسماء الخلايا في الشيت عندك
+  const logo = settings.logoSrc || settings.logoUrl || "https://i.postimg.cc/RFYB8gjL/1000273592_cd331d30c881c099ee519b011cb86f56_3_3_2026_5_26_08_PM.png";
+  const siteName = settings.siteName || "المجد جروب";
 
   return (
     <div className="App">
-      <Navbar logo={finalLogo} brandName={settings.siteName || "المجد جروب"} />
+      {/* سطر تأكيد: لو اللوجو مظهرش في النافبار هيظهر هنا غصب عنه للتأكد */}
+      <div style={{display:'none'}}><img src={logo} alt="check" /></div>
+
+      <Navbar logo={logo} brandName={siteName} />
       
       <main>
         <Hero 
-          title={settings.heroTitle} 
-          subtitle={settings.heroDesc} 
+          title={settings.heroTitle || "ابدأ مسيرتك"} 
+          subtitle={settings.heroDesc || "نربطك بأفضل الفرص"} 
           image={settings.heroImage} 
         />
-        {/* نمرر الـ settings كاملة للأقسام الأخرى */}
+        
         <Categories data={settings} />
         <Jobs data={settings} />
         
@@ -74,7 +75,8 @@ function App() {
           location={settings.location}
         />
       </main>
-      <Footer brandName={settings.siteName || "المجد جروب"} />
+
+      <Footer brandName={siteName} />
     </div>
   );
 }
