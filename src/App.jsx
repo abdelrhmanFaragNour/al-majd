@@ -1,4 +1,4 @@
-// v3.4 — Google Sheets fix with Logo from A1
+// v3.5 — Google Sheets fix with manual logo/ads persistence
 import React from "react";
 import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 
@@ -363,6 +363,7 @@ const adminStore = {
   save: (d) => { 
     try { 
       localStorage.setItem(ADMIN_KEY, JSON.stringify(d)); 
+      console.log("💾 تم حفظ التغييرات في adminStore");
     } catch {} 
   },
   load: () => { 
@@ -372,6 +373,12 @@ const adminStore = {
       return null; 
     } 
   },
+  clear: () => {
+    try {
+      localStorage.removeItem(ADMIN_KEY);
+      console.log("🗑 تم مسح adminStore");
+    } catch {}
+  }
 };
 
 /* ════════════════════════════════════════════════════════════════════
@@ -461,20 +468,22 @@ const parseSettings = (rows) => {
     return cfg;
   }
   
-  // ✅ قراءة اللوجو من A1 (الصف الأول بعد العناوين، العمود الأول)
-  if (rows[1] && rows[1][0]) {
-    cfg.logoSrc = rows[1][0].trim();
-    console.log("🖼 تم تحميل اللوجو من A1:", cfg.logoSrc);
-  }
-  
-  // قراءة باقي الإعدادات (من الصف 2 وما بعده)
-  rows.slice(2).forEach((r, idx) => {
-    if (!Array.isArray(r) || r.length < 2) return;
-    const k = (r[0] || "").trim();
-    const v = (r[1] || "").trim();
-    if (k && v) {
-      cfg[k] = v;
-      console.log(`⚙ إعداد: ${k} = ${v}`);
+  // قراءة كل الصفوف
+  rows.slice(1).forEach((r, idx) => {
+    if (!Array.isArray(r) || r.length < 1) return;
+    
+    const key = r[0] ? r[0].trim() : '';
+    const value = r[1] ? r[1].trim() : '';
+    
+    // إذا كان المفتاح هو "logoSrc" أو الصف الأول (idx === 0) والقيمة تبدأ بـ http
+    if (key === 'logoSrc' || (idx === 0 && key.startsWith('http'))) {
+      cfg.logoSrc = key; // اللوجو موجود في العمود A
+      console.log("🖼 تم تحميل اللوجو من A1:", cfg.logoSrc);
+    }
+    // باقي الإعدادات: مفتاح وقيمة
+    else if (key && value && key !== 'logoSrc') {
+      cfg[key] = value;
+      console.log(`⚙ إعداد: ${key} = ${value}`);
     }
   });
   
@@ -833,37 +842,8 @@ const Header = memo(({ cfg, social = [], error, onRetry }) => {
       {error && (
         <div role="alert" style={{ display:"inline-flex", alignItems:"center", gap:8, marginTop:14, padding:"6px 16px", background:"rgba(248,113,113,.1)", border:"1px solid rgba(248,113,113,.25)", borderRadius:50, color:"#f87171", fontSize:12, fontWeight:600 }}>
           ⚠ {error}
-          {onRetry && (
-            <button 
-              onClick={onRetry}
-              style={{ background:"none", border:"1px solid currentColor", borderRadius:20, padding:"3px 10px", marginRight:8, cursor:"pointer", color:"#f87171" }}
-            >
-              إعادة المحاولة
-            </button>
-          )}
         </div>
       )}
-
-      <div style={{ marginTop: 20 }}>
-        <button 
-          onClick={onRetry}
-          style={{
-            background:"rgba(201,162,39,.1)",
-            border:"1px solid var(--border)",
-            borderRadius:50,
-            padding:"8px 20px",
-            color:"var(--gold)",
-            fontSize:13,
-            fontWeight:600,
-            cursor:"pointer",
-            display:"inline-flex",
-            alignItems:"center",
-            gap:8
-          }}
-        >
-          🔄 تحديث البيانات من جوجل شيت
-        </button>
-      </div>
 
       {social.length > 0 && (
         <div style={{ display:"flex", gap:16, justifyContent:"center", marginTop:22, flexWrap:"wrap", alignItems:"center" }}>
@@ -1107,8 +1087,9 @@ const AdminPanel = ({ state, setState, onClose }) => {
     const j = { ...form, id: editId==="NEW" ? "adm-" + uid() : editId };
     setJobs(editId==="NEW" ? [j, ...jobs] : jobs.map(x => x.id===editId ? j : x));
     setEditId(null);
+    cache.clear(); // مسح الكاش بعد التعديل
   };
-  const deleteJob  = (id) => { if (!confirm("حذف الوظيفة؟")) return; setJobs(jobs.filter(x=>x.id!==id)); };
+  const deleteJob  = (id) => { if (!confirm("حذف الوظيفة؟")) return; setJobs(jobs.filter(x=>x.id!==id)); cache.clear(); };
   const toggleProp = (id, key) => setJobs(jobs.map(x => x.id===id ? {...x,[key]:!x[key]} : x));
 
   const openAd = (a) => {
@@ -1117,13 +1098,33 @@ const AdminPanel = ({ state, setState, onClose }) => {
   };
   const saveAd   = () => {
     const a = { ...adForm, id: adEdit==="NEW" ? "adm-" + uid() : adEdit };
-    setState(s => ({ ...s, ads: adEdit==="NEW" ? [a,...s.ads] : s.ads.map(x=>x.id===adEdit?a:x) }));
+    setState(s => {
+      const newState = { 
+        ...s, 
+        ads: adEdit==="NEW" ? [a, ...s.ads] : s.ads.map(x => x.id===adEdit ? a : x) 
+      };
+      cache.clear(); // مسح الكاش بعد حفظ الإعلان
+      return newState;
+    });
     setAdEdit(null);
   };
-  const deleteAd   = (id) => { if (confirm("حذف الإعلان؟")) setState(s=>({...s,ads:s.ads.filter(x=>x.id!==id)})); };
+  const deleteAd   = (id) => { 
+    if (confirm("حذف الإعلان؟")) {
+      setState(s => {
+        const newState = { ...s, ads: s.ads.filter(x => x.id !== id) };
+        cache.clear(); // مسح الكاش بعد حذف الإعلان
+        return newState;
+      });
+    }
+  };
   const addCity    = () => { if (newCity.trim()) { setState(s=>({...s,cities:[...s.cities,newCity.trim()]})); setNewCity(""); } };
   const removeCity = (c) => setState(s=>({...s,cities:s.cities.filter(x=>x!==c)}));
-  const saveCfg    = () => { setState(s=>({...s,cfg:{...s.cfg,...cfgF}})); console.log("💾 تم حفظ الإعدادات، اللوجو:", cfgF.logoSrc); alert("تم الحفظ"); };
+  const saveCfg    = () => { 
+    setState(s => ({...s, cfg:{...s.cfg, ...cfgF}})); 
+    cache.clear(); // مسح الكاش بعد حفظ الإعدادات
+    console.log("💾 تم حفظ الإعدادات، اللوجو الجديد:", cfgF.logoSrc);
+    alert("تم الحفظ"); 
+  };
 
   const onAdImg = async (e) => {
     const f = e.target.files?.[0];
@@ -1156,7 +1157,7 @@ const AdminPanel = ({ state, setState, onClose }) => {
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 24px", borderBottom:"1px solid var(--border)" }}>
           <span style={{ fontWeight:900, fontSize:17, color:"var(--gold)" }}>⚙ لوحة التحكم</span>
           <div style={{ display:"flex", gap:10 }}>
-            <button className="btn btn-ghost" style={{ padding:"7px 14px", fontSize:12 }} onClick={()=>{cache.clear();alert("تم مسح الكاش!");}}>🗑 مسح الكاش</button>
+            <button className="btn btn-ghost" style={{ padding:"7px 14px", fontSize:12 }} onClick={()=>{cache.clear(); alert("تم مسح الكاش!");}}>🗑 مسح الكاش</button>
             <button className="btn btn-danger" style={{ padding:"7px 16px", fontSize:12 }} onClick={onClose}>✕ إغلاق</button>
           </div>
         </div>
@@ -1504,9 +1505,6 @@ export default function App() {
       try {
         settingsRows = await fetchSheet("settings");
         console.log("✅ تم تحميل settings:", settingsRows.length, "صف");
-        if (settingsRows.length > 0) {
-          console.log("📋 عينة settings:", settingsRows.slice(0, 3));
-        }
       } catch (e) {
         console.warn("⚠️ فشل تحميل settings:", e);
       }
@@ -1514,9 +1512,6 @@ export default function App() {
       try {
         visaRows = await fetchSheet("visa");
         console.log("✅ تم تحميل visa:", visaRows.length, "صف");
-        if (visaRows.length > 0) {
-          console.log("📋 عينة visa:", visaRows.slice(0, 3));
-        }
       } catch (e) {
         console.warn("⚠️ فشل تحميل visa:", e);
       }
@@ -1524,9 +1519,6 @@ export default function App() {
       try {
         transferRows = await fetchSheet("transfer");
         console.log("✅ تم تحميل transfer:", transferRows.length, "صف");
-        if (transferRows.length > 0) {
-          console.log("📋 عينة transfer:", transferRows.slice(0, 3));
-        }
       } catch (e) {
         console.warn("⚠️ فشل تحميل transfer:", e);
       }
@@ -1534,9 +1526,6 @@ export default function App() {
       try {
         adsRows = await fetchSheet("ads");
         console.log("✅ تم تحميل ads:", adsRows.length, "صف");
-        if (adsRows.length > 0) {
-          console.log("📋 عينة ads:", adsRows.slice(0, 3));
-        }
       } catch (e) {
         console.warn("⚠️ فشل تحميل ads:", e);
       }
@@ -1544,38 +1533,38 @@ export default function App() {
       try {
         socialRows = await fetchSheet("social");
         console.log("✅ تم تحميل social:", socialRows.length, "صف");
-        if (socialRows.length > 0) {
-          console.log("📋 عينة social:", socialRows.slice(0, 3));
-        }
       } catch (e) {
         console.warn("⚠️ فشل تحميل social:", e);
       }
       
-      // إذا ما فيش أي بيانات جديدة، ارجع
-      if (!settingsRows.length && !visaRows.length && !transferRows.length && !adsRows.length && !socialRows.length) {
-        if (!silent) {
-          setError("لم يتم تحميل أي بيانات من جوجل شيت - يتم عرض البيانات الافتراضية");
-        }
-        if (!silent) {
-          setLoading(false);
-        }
-        return;
-      }
-      
-      // معالجة البيانات
+      // معالجة البيانات من الشيت
       const newCfg    = settingsRows.length ? parseSettings(settingsRows) : DEF_CFG;
       const vj        = visaRows.length ? parseJobs(visaRows) : [];
       const tj        = transferRows.length ? parseJobs(transferRows) : [];
       const newAds    = adsRows.length ? parseAds(adsRows) : [];
       const newSocial = socialRows.length ? parseSocial(socialRows) : [];
       
-      console.log("📊 نتائج المعالجة:", {
-        cfg: Object.keys(newCfg).length,
-        visaJobs: vj.length,
-        transJobs: tj.length,
-        ads: newAds.length,
-        social: newSocial.length
-      });
+      // دمج البيانات اليدوية من adminStore
+      const adminData = adminStore.load();
+      
+      // دمج اللوجو اليدوي
+      if (adminData?.cfg?.logoSrc) {
+        newCfg.logoSrc = adminData.cfg.logoSrc;
+        console.log("🖼 استخدام اللوجو اليدوي:", newCfg.logoSrc);
+      }
+      
+      // دمج الإعلانات اليدوية
+      if (adminData?.ads && adminData.ads.length > 0) {
+        console.log("📢 دمج الإعلانات اليدوية:", adminData.ads.length, "إعلان");
+        
+        // الإعلانات اليدوية ليها priority (ليها id يبدأ بـ "adm-")
+        const manualAds = adminData.ads.filter(ad => ad.id.startsWith('adm-'));
+        const sheetAds = newAds.filter(ad => !ad.id.startsWith('adm-'));
+        
+        // دمج الإعلانات مع بعض (اليدوية أولاً)
+        newAds.length = 0;
+        newAds.push(...manualAds, ...sheetAds);
+      }
       
       const citiesRaw = [...new Set([...vj, ...tj].map(j => j.city).filter(Boolean))];
       
@@ -1599,14 +1588,10 @@ export default function App() {
       };
       cache.save(cacheData);
       
-      if (!silent) {
-        console.log("✅ تم تحديث البيانات بنجاح");
-      }
-      
     } catch (e) {
       console.error("🔥 خطأ في تحميل البيانات:", e);
       if (!silent) {
-        setError("حدث خطأ في الاتصال بجوجل شيت - يتم عرض البيانات الافتراضية");
+        setError("حدث خطأ في الاتصال بجوجل شيت");
       }
     } finally {
       if (!silent) {
@@ -1617,7 +1602,12 @@ export default function App() {
 
   useEffect(() => {
     const loadFromCache = async () => {
+      // أولاً: حمل من adminStore (التغييرات اليدوية)
+      const adminData = adminStore.load();
+      
+      // ثانياً: حمل من الكاش الرئيسي
       const hit = cache.load();
+      
       if (hit) {
         console.log("📦 استخدام البيانات من الكاش");
         
@@ -1627,6 +1617,28 @@ export default function App() {
         const newAds    = hit.adT ? parseAds(hit.adT) : [];
         const newSocial = hit.soT ? parseSocial(hit.soT) : [];
         const citiesRaw = [...new Set([...vj, ...tj].map(j => j.city).filter(Boolean))];
+        
+        // دمج البيانات من adminStore
+        if (adminData) {
+          // دمج اللوجو
+          if (adminData.cfg?.logoSrc) {
+            newCfg.logoSrc = adminData.cfg.logoSrc;
+            console.log("🖼 استخدام اللوجو من adminStore:", newCfg.logoSrc);
+          }
+          
+          // دمج الإعلانات
+          if (adminData.ads && adminData.ads.length > 0) {
+            console.log("📢 دمج الإعلانات من adminStore:", adminData.ads.length, "إعلان");
+            
+            // الإعلانات اليدوية (اللي ليها id يبدأ بـ "adm-") ليها priority
+            const manualAds = adminData.ads.filter(ad => ad.id.startsWith('adm-'));
+            const sheetAds = newAds.filter(ad => !ad.id.startsWith('adm-'));
+            
+            // الإعلانات اليدوية تحل محل نظيراتها من الشيت
+            newAds.length = 0;
+            newAds.push(...manualAds, ...sheetAds);
+          }
+        }
         
         setS(prev => ({
           ...prev,
@@ -1642,9 +1654,14 @@ export default function App() {
         
         // حتى لو فيه كاش، حاول تجيب بيانات جديدة في الخلفية
         console.log("🔄 جلب بيانات جديدة في الخلفية...");
-        fetchAllSheets(true); // true يعني تحديث في الخلفية
+        fetchAllSheets(true);
         
       } else {
+        // إذا مفيش كاش، استخدم adminStore أولاً
+        if (adminData) {
+          console.log("📦 استخدام البيانات من adminStore");
+          setS(adminData);
+        }
         await fetchAllSheets(false);
       }
     };
@@ -1655,7 +1672,8 @@ export default function App() {
 
   const handleManualRefresh = () => {
     cache.clear(); // امسح الكاش أولاً
-    fetchAllSheets(false); // ثم حمل من جديد
+    adminStore.clear(); // امسح التعديلات اليدوية كمان (اختياري)
+    window.location.reload(); // أعد تحميل الصفحة
   };
 
   const allJobs = tab === "visa" ? S.visaJobs : S.transJobs;
@@ -1803,12 +1821,21 @@ export default function App() {
           <p style={{ marginTop:6, opacity:.3, fontSize:10 }}>اضغط على الأيقونة أعلاه ثلاث مرات لفتح لوحة التحكم</p>
         </footer>
 
-        <button onClick={() => setAdminLogin(true)} aria-label="لوحة التحكم"
-          style={{ position:"fixed", top:16, left:16, zIndex:900, background:"rgba(255,255,255,.04)", border:"1px solid rgba(255,255,255,.06)", borderRadius:10, padding:"7px 11px", color:"rgba(255,255,255,.18)", cursor:"pointer", fontSize:14, transition:"all .2s" }}
-          onMouseEnter={e => { e.currentTarget.style.color="var(--gold)"; e.currentTarget.style.borderColor="var(--border)"; }}
-          onMouseLeave={e => { e.currentTarget.style.color="rgba(255,255,255,.18)"; e.currentTarget.style.borderColor="rgba(255,255,255,.06)"; }}>
-          ⚙
-        </button>
+        {/* أزرار التحكم في الزاوية */}
+        <div style={{ position:"fixed", top:16, left:16, zIndex:900, display:"flex", gap:8 }}>
+          <button onClick={() => setAdminLogin(true)} aria-label="لوحة التحكم"
+            style={{ background:"rgba(255,255,255,.04)", border:"1px solid rgba(255,255,255,.06)", borderRadius:10, padding:"7px 11px", color:"rgba(255,255,255,.18)", cursor:"pointer", fontSize:14, transition:"all .2s" }}
+            onMouseEnter={e => { e.currentTarget.style.color="var(--gold)"; e.currentTarget.style.borderColor="var(--border)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color="rgba(255,255,255,.18)"; e.currentTarget.style.borderColor="rgba(255,255,255,.06)"; }}>
+            ⚙
+          </button>
+          <button onClick={handleManualRefresh} aria-label="تحديث"
+            style={{ background:"rgba(255,255,255,.04)", border:"1px solid rgba(255,255,255,.06)", borderRadius:10, padding:"7px 11px", color:"rgba(255,255,255,.18)", cursor:"pointer", fontSize:14, transition:"all .2s" }}
+            onMouseEnter={e => { e.currentTarget.style.color="var(--gold)"; e.currentTarget.style.borderColor="var(--border)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color="rgba(255,255,255,.18)"; e.currentTarget.style.borderColor="rgba(255,255,255,.06)"; }}>
+            🔄
+          </button>
+        </div>
 
         <FloatingWA cfg={S.cfg} />
       </div>
